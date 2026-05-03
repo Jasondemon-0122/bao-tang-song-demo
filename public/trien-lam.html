@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Triển Lãm Bảo Tàng Sống</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #2c3e50; color: white; padding: 20px; }
+        .grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin-top: 30px; }
+        .card { background: #34495e; padding: 20px; border-radius: 10px; width: 250px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
+        .card img { width: 100%; border-radius: 5px; cursor: pointer; border: 2px solid transparent; transition: 0.3s; }
+        .card img:hover { border-color: #3498db; }
+        button { margin-top: 15px; padding: 10px; width: 100%; background: #e74c3c; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .nav-link { color: #f1c40f; text-decoration: none; font-weight: bold; display: block; margin-bottom: 20px;}
+    </style>
+</head>
+<body>
+    <h2>🏛️ Phòng Triển Lãm & Quét AR</h2>
+    <a href="/" class="nav-link">⬅️ Quay lại trang Nộp Bài</a>
+    <p>💻 Dùng máy tính click vào ảnh để phóng to.<br>📱 Dùng điện thoại click nút "Bật Camera AR" để quét.</p>
+    
+    <div class="grid" id="gallery">Đang tải danh sách...</div>
+
+    <script>
+        async function loadData() {
+            const res = await fetch('/api/danh-sach');
+            const students = await res.json();
+            const gallery = document.getElementById('gallery');
+            gallery.innerHTML = '';
+
+            if(students.length === 0) return gallery.innerHTML = "Chưa có nhóm nào nộp bài.";
+
+            students.forEach(name => {
+                gallery.innerHTML += `
+                    <div class="card">
+                        <h3>${name.replace(/_/g, ' ')}</h3>
+                        <a href="/data/${name}/image.jpg" target="_blank">
+                            <img src="/data/${name}/image.jpg" title="Click để phóng to ảnh tĩnh">
+                        </a>
+                        <button onclick="openAR('${name}')">📷 Bật Camera AR</button>
+                    </div>
+                `;
+            });
+        }
+
+        function openAR(name) {
+            window.location.href = `/ar-view.html?id=${name}`;
+        }
+
+        loadData();
+    </script>
+</body>
+</html>

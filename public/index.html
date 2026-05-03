@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nộp Sản Phẩm Bảo Tàng Sống</title>
+    
+    <!-- Dùng file đã cài qua npm để đảm bảo ổn định 100% -->
+    <script src="/mindar/mindar-image-aframe.prod.js"></script>
+    
+    <style>
+        body { font-family: sans-serif; background: #eef2f3; padding: 20px; }
+        .container { max-width: 500px; margin: auto; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        input, button { display: block; width: 100%; margin: 15px 0; padding: 10px; box-sizing: border-box; }
+        button { background: #28a745; color: #fff; border: none; font-weight: bold; cursor: pointer; border-radius: 5px; font-size: 16px; }
+        #status { color: #007bff; font-weight: bold; text-align: center; margin-top: 15px; }
+        .nav-link { text-align: center; display: block; margin-top: 20px; color: #e74c3c; font-weight: bold; text-decoration: none;}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 style="text-align: center;">Khu Vực Nộp Bài</h2>
+        <input type="text" id="tenNhom" placeholder="Nhập tên học sinh / Nhóm của bạn" required>
+        <label>1. Chân dung (Hình ảnh):</label>
+        <input type="file" id="imageInput" accept="image/*">
+        <label>2. Lồng tiếng (Video MP4):</label>
+        <input type="file" id="videoInput" accept="video/mp4">
+        
+        <button id="submitBtn">Tạo & Nộp Bài Lên Hệ Thống</button>
+        <p id="status"></p>
+        <a href="/trien-lam.html" class="nav-link">👉 Đi tới Phòng Triển Lãm AR</a>
+    </div>
+
+    <script>
+        document.getElementById('submitBtn').addEventListener('click', async () => {
+            const ten = document.getElementById('tenNhom').value;
+            const imgFile = document.getElementById('imageInput').files[0];
+            const vidFile = document.getElementById('videoInput').files[0];
+
+            if(!ten || !imgFile || !vidFile) return alert("Vui lòng nhập đủ thông tin!");
+
+            const status = document.getElementById('status');
+            status.innerText = "Đang kết nối bộ xử lý hình ảnh...";
+
+            try {
+                const image = new Image();
+                image.src = URL.createObjectURL(imgFile);
+                
+                image.onload = async () => {
+                    // Kiểm tra xem thư viện đã nạp chưa
+                    if (typeof MINDAR === 'undefined' || !MINDAR.IMAGE.Compiler) {
+                        status.style.color = "red";
+                        status.innerText = "Lỗi: Không thể nạp bộ xử lý AR. Hãy thử nhấn F5.";
+                        return;
+                    }
+
+                    const compiler = new MINDAR.IMAGE.Compiler();
+                    status.innerText = "Đang phân tích đặc điểm nhận diện...";
+                    
+                    await compiler.compileImageTargets([image], (progress) => {
+                        status.innerText = `Đang xử lý: ${Math.round(progress)}%`;
+                    });
+
+                    const mindBuffer = await compiler.exportData();
+                    const formData = new FormData();
+                    formData.append('tenNhom', ten);
+                    formData.append('image', imgFile);
+                    formData.append('video', vidFile);
+                    formData.append('mind', new Blob([mindBuffer]), 'targets.mind');
+
+                    status.innerText = "Đang gửi sản phẩm lên máy chủ...";
+                    const response = await fetch('/api/nop-bai', { method: 'POST', body: formData });
+                    const result = await response.json();
+                    
+                    if(result.success) {
+                        status.style.color = "green";
+                        status.innerText = "🎉 Thành công! Bài của bạn đã có trong Phòng Triển Lãm.";
+                    }
+                };
+            } catch (err) {
+                console.error(err);
+                status.innerText = "Lỗi hệ thống!";
+            }
+        });
+    </script>
+</body>
+</html>
