@@ -6,10 +6,13 @@
     <script src="./js/aframe.min.js"></script>
     <script src="/mindar/mindar-image-aframe.prod.js"></script>
     <style> 
-        /* 1. SỬA LỖI ĐEN CAMERA: Đổi background thành trong suốt */
         body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: transparent; } 
         
-        /* 2. Giao diện nút bấm bắt đầu cực ngầu */
+        /* 1. SỬA LỖI MÀN HÌNH TRẮNG: Ép khung 3D tràn viền tuyệt đối */
+        #scene-container {
+            position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1;
+        }
+
         #start-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(44, 62, 80, 0.95); z-index: 9999;
@@ -22,13 +25,13 @@
     </style>
   </head>
   <body>
-    <!-- Lớp phủ yêu cầu chạm để mở khóa video/audio -->
     <div id="start-screen">
         <h2>🏛️ Sẵn Sàng Quét AR</h2>
-        <p>Trình duyệt bảo mật yêu cầu bạn chạm vào màn hình để cấp quyền phát video lồng tiếng.</p>
+        <p>Trình duyệt yêu cầu bạn chạm vào màn hình để cấp quyền phát video lồng tiếng.</p>
         <button id="start-btn">Bắt Đầu Trải Nghiệm</button>
     </div>
 
+    <!-- Khung chứa 3D giờ đã được ép kích thước -->
     <div id="scene-container"></div>
 
     <script>
@@ -39,27 +42,28 @@
         if(!id || !vid) alert("Lỗi: Không tìm thấy bài học sinh!");
 
         document.getElementById('start-btn').addEventListener('click', () => {
-            // Tắt màn hình chào sau khi người dùng bấm
             document.getElementById('start-screen').style.display = 'none';
             
-            // Render khung cảnh AR
             document.getElementById('scene-container').innerHTML = `
                 <a-scene mindar-image="imageTargetSrc: /data/${id}/targets.mind; autoStart: true;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
                   <a-assets>
-                    <!-- 3. SỬA LỖI ĐEN VIDEO TRÊN IPHONE: Bắt buộc có playsinline và webkit-playsinline -->
                     <video id="userVideo" src="${vid}" loop crossorigin="anonymous" playsinline webkit-playsinline></video>
                   </a-assets>
                   <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
                   <a-entity mindar-image-target="targetIndex: 0">
-                    <a-video src="#userVideo" position="0 0 0" height="1" width="1"></a-video>
+                    <!-- 2. SỬA LỖI MẤT HÌNH: Dùng a-plane (mặt phẳng) thay vì a-video -->
+                    <a-plane material="src: #userVideo" position="0 0 0" height="1" width="1"></a-plane>
                   </a-entity>
                 </a-scene>
             `;
 
-            // Xử lý chạy video khi quét trúng ảnh
             setTimeout(() => {
                 const target = document.querySelector('[mindar-image-target]');
                 const videoEl = document.getElementById('userVideo');
+                
+                // Mẹo "Mở khóa" hệ thống video ẩn của trình duyệt di động
+                videoEl.play().then(() => { videoEl.pause(); }).catch(e => console.log(e));
+
                 if(target) {
                     target.addEventListener("targetFound", () => videoEl.play());
                     target.addEventListener("targetLost", () => videoEl.pause());
