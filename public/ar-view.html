@@ -1,41 +1,71 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta charset="UTF-8">
     <script src="./js/aframe.min.js"></script>
     <script src="/mindar/mindar-image-aframe.prod.js"></script>
-    <style> body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #000; } </style>
+    <style> 
+        /* 1. SỬA LỖI ĐEN CAMERA: Đổi background thành trong suốt */
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: transparent; } 
+        
+        /* 2. Giao diện nút bấm bắt đầu cực ngầu */
+        #start-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(44, 62, 80, 0.95); z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; font-family: sans-serif; text-align: center; padding: 20px; box-sizing: border-box;
+        }
+        #start-btn {
+            padding: 15px 30px; font-size: 18px; font-weight: bold; background: #e74c3c; color: white; border: none; border-radius: 8px; margin-top: 20px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: 0.3s;
+        }
+        #start-btn:active { transform: scale(0.95); }
+    </style>
   </head>
-  <body id="scene-container">
+  <body>
+    <!-- Lớp phủ yêu cầu chạm để mở khóa video/audio -->
+    <div id="start-screen">
+        <h2>🏛️ Sẵn Sàng Quét AR</h2>
+        <p>Trình duyệt bảo mật yêu cầu bạn chạm vào màn hình để cấp quyền phát video lồng tiếng.</p>
+        <button id="start-btn">Bắt Đầu Trải Nghiệm</button>
+    </div>
+
+    <div id="scene-container"></div>
+
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const id = urlParams.get('id');
-        const vid = urlParams.get('vid'); // Lấy link video Cloudinary
+        const vid = urlParams.get('vid');
         
         if(!id || !vid) alert("Lỗi: Không tìm thấy bài học sinh!");
-        
-        document.getElementById('scene-container').innerHTML = `
-            <a-scene mindar-image="imageTargetSrc: /data/${id}/targets.mind; autoStart: true;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
-              <a-assets>
-                <!-- Video nay được phát trực tiếp từ mây, tốc độ cực nhanh -->
-                <video id="userVideo" src="${vid}" loop crossorigin="anonymous"></video>
-              </a-assets>
-              <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-              <a-entity mindar-image-target="targetIndex: 0">
-                <a-video src="#userVideo" position="0 0 0" height="1" width="1"></a-video>
-              </a-entity>
-            </a-scene>
-        `;
 
-        setTimeout(() => {
-            const target = document.querySelector('[mindar-image-target]');
-            const videoEl = document.getElementById('userVideo');
-            if(target) {
-                target.addEventListener("targetFound", () => videoEl.play());
-                target.addEventListener("targetLost", () => videoEl.pause());
-            }
-        }, 1000);
+        document.getElementById('start-btn').addEventListener('click', () => {
+            // Tắt màn hình chào sau khi người dùng bấm
+            document.getElementById('start-screen').style.display = 'none';
+            
+            // Render khung cảnh AR
+            document.getElementById('scene-container').innerHTML = `
+                <a-scene mindar-image="imageTargetSrc: /data/${id}/targets.mind; autoStart: true;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+                  <a-assets>
+                    <!-- 3. SỬA LỖI ĐEN VIDEO TRÊN IPHONE: Bắt buộc có playsinline và webkit-playsinline -->
+                    <video id="userVideo" src="${vid}" loop crossorigin="anonymous" playsinline webkit-playsinline></video>
+                  </a-assets>
+                  <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+                  <a-entity mindar-image-target="targetIndex: 0">
+                    <a-video src="#userVideo" position="0 0 0" height="1" width="1"></a-video>
+                  </a-entity>
+                </a-scene>
+            `;
+
+            // Xử lý chạy video khi quét trúng ảnh
+            setTimeout(() => {
+                const target = document.querySelector('[mindar-image-target]');
+                const videoEl = document.getElementById('userVideo');
+                if(target) {
+                    target.addEventListener("targetFound", () => videoEl.play());
+                    target.addEventListener("targetLost", () => videoEl.pause());
+                }
+            }, 1000);
+        });
     </script>
   </body>
 </html>
