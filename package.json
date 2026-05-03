@@ -12,6 +12,7 @@
   "type": "commonjs",
   "dependencies": {
     "adm-zip": "^0.5.17",
+    "cloudinary": "^2.10.0",
     "express": "^5.2.1",
     "mind-ar": "^1.2.5",
     "multer": "^2.1.1"

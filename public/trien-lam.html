@@ -21,7 +21,7 @@
     
     <div class="grid" id="gallery">Đang tải danh sách...</div>
 
-    <script>
+   <script>
         async function loadData() {
             const res = await fetch('/api/danh-sach');
             const students = await res.json();
@@ -30,21 +30,22 @@
 
             if(students.length === 0) return gallery.innerHTML = "Chưa có nhóm nào nộp bài.";
 
-            students.forEach(name => {
+            students.forEach(student => {
                 gallery.innerHTML += `
                     <div class="card">
-                        <h3>${name.replace(/_/g, ' ')}</h3>
-                        <a href="/data/${name}/image.jpg" target="_blank">
-                            <img src="/data/${name}/image.jpg" title="Click để phóng to ảnh tĩnh">
+                        <h3>${student.name.replace(/_/g, ' ')}</h3>
+                        <a href="${student.image}" target="_blank">
+                            <img src="${student.image}" title="Click để phóng to ảnh">
                         </a>
-                        <button onclick="openAR('${name}')">📷 Bật Camera AR</button>
+                        <button onclick="openAR('${student.name}', '${student.video}')">📷 Bật Camera AR</button>
                     </div>
                 `;
             });
         }
 
-        function openAR(name) {
-            window.location.href = `/ar-view.html?id=${name}`;
+        function openAR(name, videoUrl) {
+            // Truyền tên và đường link video trên Cloudinary sang trang AR
+            window.location.href = `/ar-view.html?id=${name}&vid=${encodeURIComponent(videoUrl)}`;
         }
 
         loadData();

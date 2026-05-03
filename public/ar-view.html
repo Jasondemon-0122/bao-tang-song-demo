@@ -4,18 +4,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta charset="UTF-8">
     <script src="./js/aframe.min.js"></script>
-    <script src="./js/mindar-image-aframe.prod.js"></script>
+    <script src="/mindar/mindar-image-aframe.prod.js"></script>
     <style> body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #000; } </style>
   </head>
   <body id="scene-container">
     <script>
-        const id = new URLSearchParams(window.location.search).get('id');
-        if(!id) alert("Lỗi: Không tìm thấy bài học sinh!");
+        const urlParams = new URLSearchParams(window.location.search);
+        const id = urlParams.get('id');
+        const vid = urlParams.get('vid'); // Lấy link video Cloudinary
+        
+        if(!id || !vid) alert("Lỗi: Không tìm thấy bài học sinh!");
         
         document.getElementById('scene-container').innerHTML = `
             <a-scene mindar-image="imageTargetSrc: /data/${id}/targets.mind; autoStart: true;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
               <a-assets>
-                <video id="userVideo" src="/data/${id}/video.mp4" loop crossorigin="anonymous"></video>
+                <!-- Video nay được phát trực tiếp từ mây, tốc độ cực nhanh -->
+                <video id="userVideo" src="${vid}" loop crossorigin="anonymous"></video>
               </a-assets>
               <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
               <a-entity mindar-image-target="targetIndex: 0">
