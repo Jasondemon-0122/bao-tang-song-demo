@@ -11,86 +11,63 @@ cloudinary.config({
     api_secret: '9ICn7uAjxyng00JAa_W46i7_DJE'
 });
 
-// --- 2. CẤU HÌNH CƠ SỞ DỮ LIỆU MONGODB (Đã chèn chuẩn mã của bạn) ---
-const mongoUri = "mongodb+srv://Admin:Lehuy2005%40@cluster0.merrmad.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
-const client = new MongoClient(mongoUri);
-let db;
-client.connect().then(() => {
-    db = client.db("BaoTangSong");
-    console.log("✅ Đã kết nối với sổ ghi chép MongoDB!");
-}).catch(err => console.error("Lỗi MongoDB:", err));
-
-// --- 3. CẤU HÌNH DANH SÁCH LỚP & MẬT KHẨU GIÁO VIÊN ---
-const LOP_HOC = {
-    "11A1": "mk11a1",
-    "11A2": "mk11a2",
-    "11A3": "mk11a3"
-};
-const ADMIN_PASS = "giaovien123"; // Mật khẩu quyền lực nhất của bạn
-
 const app = express();
 const upload = multer({ dest: 'temp/' });
-app.use(express.json()); // Hỗ trợ đọc dữ liệu JSON
+
 app.use('/mindar', express.static(path.join(__dirname, 'node_modules/mind-ar/dist')));
 app.use(express.static('public'));
+app.use('/data', express.static('data'));
 
-// --- API 1: HỌC SINH NỘP BÀI ---
+// API Nhận bài nộp (Đã nâng cấp)
 app.post('/api/nop-bai', upload.fields([{ name: 'image' }, { name: 'video' }, { name: 'mind' }]), async (req, res) => {
     try {
-        const { lop, tenNhom } = req.body;
-        if (!LOP_HOC[lop]) return res.status(400).json({ success: false, message: 'Lớp không tồn tại!' });
+        let tenNhom = req.body.tenNhom.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]/g, '_');
+        if (!tenNhom) tenNhom = "Hoc_Sinh_An_Danh";
 
-        // Đẩy toàn bộ 3 file lên mây (File .mind tải dạng 'raw' để lưu trữ vĩnh viễn)
-        const imgUpload = await cloudinary.uploader.upload(req.files['image'][0].path, { folder: `bao-tang-song/${lop}` });
-        const vidUpload = await cloudinary.uploader.upload(req.files['video'][0].path, { folder: `bao-tang-song/${lop}`, resource_type: "video" });
-        const mindUpload = await cloudinary.uploader.upload(req.files['mind'][0].path, { folder: `bao-tang-song/${lop}`, resource_type: "raw" });
+        const dirPath = path.join(__dirname, 'data', tenNhom);
+        if (!fs.existsSync(dirPath)) fs.mkdirSync(dirPath, { recursive: true });
 
-        // Ghi thông tin bài nộp vào sổ MongoDB
-        await db.collection("submissions").insertOne({
-            lop: lop,
-            tenNhom: tenNhom || "Ẩn danh",
-            image: imgUpload.secure_url,
-            video: vidUpload.secure_url,
-            mind: mindUpload.secure_url, // Link AR giờ đã nằm trên mây
-            ngayNop: new Date()
-        });
+        // 1. Gửi Ảnh và Video lên Cloudinary
+        const imgUpload = await cloudinary.uploader.upload(req.files['image'][0].path, { folder: "bao-tang-song" });
+        const vidUpload = await cloudinary.uploader.upload(req.files['video'][0].path, { folder: "bao-tang-song", resource_type: "video" });
 
-        // Dọn dẹp máy chủ Render
+        // 2. Giữ file nhận diện AR .mind lại máy chủ
+        fs.renameSync(req.files['mind'][0].path, path.join(dirPath, 'targets.mind'));
+
+        // 3. Lưu địa chỉ (link) của ảnh/video thành 1 file text siêu nhẹ
+        const links = { image: imgUpload.secure_url, video: vidUpload.secure_url };
+        fs.writeFileSync(path.join(dirPath, 'links.json'), JSON.stringify(links));
+
+        // 4. Xóa rác, giải phóng bộ nhớ cho máy chủ
         fs.unlinkSync(req.files['image'][0].path);
         fs.unlinkSync(req.files['video'][0].path);
-        fs.unlinkSync(req.files['mind'][0].path);
 
-        res.json({ success: true, message: 'Nộp bài thành công!' });
+        res.json({ success: true, message: 'Nộp bài lên Đám mây thành công!' });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, message: 'Lỗi khi lưu bài.' });
+        res.status(500).json({ success: false, message: 'Lỗi lưu file.' });
     }
 });
 
-// --- API 2: PHÒNG TRIỂN LÃM (Cần mật khẩu của lớp) ---
-app.post('/api/trien-lam', async (req, res) => {
-    const { lop, password } = req.body;
-    if (LOP_HOC[lop] && LOP_HOC[lop] === password) {
-        // Lọc ra các bài của đúng lớp đó
-        const data = await db.collection("submissions").find({ lop: lop }).toArray();
-        res.json({ success: true, data: data });
-    } else {
-        res.json({ success: false, message: 'Sai mật khẩu lớp!' });
-    }
-});
-
-// --- API 3: TRANG ADMIN CỦA GIÁO VIÊN (Cần mật khẩu Admin) ---
-app.post('/api/admin', async (req, res) => {
-    const { password } = req.body;
-    if (password === ADMIN_PASS) {
-        // Lấy tất cả bài nộp, sắp xếp theo lớp
-        const data = await db.collection("submissions").find({}).sort({lop: 1}).toArray();
-        res.json({ success: true, data: data });
-    } else {
-        res.json({ success: false, message: 'Sai mật khẩu Giáo viên!' });
-    }
+// API Lấy danh sách hiển thị
+app.get('/api/danh-sach', (req, res) => {
+    const dataPath = path.join(__dirname, 'data');
+    if (!fs.existsSync(dataPath)) return res.json([]);
+    
+    const students = [];
+    const dirs = fs.readdirSync(dataPath).filter(f => fs.statSync(path.join(dataPath, f)).isDirectory());
+    
+    dirs.forEach(dir => {
+        const linkFile = path.join(dataPath, dir, 'links.json');
+        if(fs.existsSync(linkFile)) {
+            const links = JSON.parse(fs.readFileSync(linkFile));
+            students.push({ name: dir, image: links.image, video: links.video });
+        }
+    });
+    res.json(students);
 });
 
 app.listen(3000, () => {
     console.log('✅ Server đang chạy tại http://localhost:3000');
+    console.log('☁️ Đã kết nối với kho lưu trữ Cloudinary!');
 });

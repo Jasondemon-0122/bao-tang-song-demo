@@ -3,65 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nộp Bài - Bảo Tàng Sống</title>
+    <title>Nộp Sản Phẩm Bảo Tàng Sống</title>
+    
+    <!-- Dùng file đã cài qua npm để đảm bảo ổn định 100% -->
+    <script src="/mindar/mindar-image-aframe.prod.js"></script>
+    
     <style>
-        body { font-family: sans-serif; background: #eef2f3; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .container { background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 350px; text-align: center; }
-        input, select, button { width: 100%; margin-top: 15px; padding: 10px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; }
-        button { background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; }
-        button:hover { background: #218838; }
-        .nav-link { display: block; margin-top: 20px; color: #007bff; text-decoration: none; font-weight: bold; }
+        body { font-family: sans-serif; background: #eef2f3; padding: 20px; }
+        .container { max-width: 500px; margin: auto; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        input, button { display: block; width: 100%; margin: 15px 0; padding: 10px; box-sizing: border-box; }
+        button { background: #28a745; color: #fff; border: none; font-weight: bold; cursor: pointer; border-radius: 5px; font-size: 16px; }
+        #status { color: #007bff; font-weight: bold; text-align: center; margin-top: 15px; }
+        .nav-link { text-align: center; display: block; margin-top: 20px; color: #e74c3c; font-weight: bold; text-decoration: none;}
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>🏛️ Nộp Sản Phẩm AR</h2>
-        <form id="uploadForm">
-            <select name="lop" id="lop" required>
-                <option value="">-- Chọn Lớp Của Bạn --</option>
-                <option value="11A1">Lớp 11A1</option>
-                <option value="11A2">Lớp 11A2</option>
-                <option value="11A3">Lớp 11A3</option>
-            </select>
-            <input type="text" name="tenNhom" id="tenNhom" placeholder="Tên Nhóm (VD: Nhóm 1)" required>
-            
-            <div style="text-align: left; margin-top: 15px;">
-                <label>1. Ảnh chân dung (Image Target):</label>
-                <input type="file" name="image" accept="image/*" required>
-            </div>
-            <div style="text-align: left; margin-top: 15px;">
-                <label>2. Video lồng tiếng (Dưới 10MB):</label>
-                <input type="file" name="video" accept="video/mp4" required>
-            </div>
-            <div style="text-align: left; margin-top: 15px;">
-                <label>3. File nhận diện (.mind):</label>
-                <input type="file" name="mind" accept=".mind" required>
-            </div>
-
-            <button type="submit" id="submitBtn">🚀 Đẩy Lên Đám Mây</button>
-            <p id="status" style="color: #e74c3c; font-weight: bold; display: none;">Đang xử lý, vui lòng đợi...</p>
-        </form>
-        <a href="/trien-lam.html" class="nav-link">👉 Đến Phòng Triển Lãm</a>
+        <h2 style="text-align: center;">Khu Vực Nộp Bài</h2>
+        <input type="text" id="tenNhom" placeholder="Nhập tên học sinh / Nhóm của bạn" required>
+        <label>1. Chân dung (Hình ảnh):</label>
+        <input type="file" id="imageInput" accept="image/*">
+        <label>2. Lồng tiếng (Video MP4):</label>
+        <input type="file" id="videoInput" accept="video/mp4">
+        
+        <button id="submitBtn">Tạo & Nộp Bài Lên Hệ Thống</button>
+        <p id="status"></p>
+        <a href="/trien-lam.html" class="nav-link">👉 Đi tới Phòng Triển Lãm AR</a>
     </div>
 
     <script>
-        document.getElementById('uploadForm').onsubmit = async (e) => {
-            e.preventDefault();
-            document.getElementById('submitBtn').style.display = 'none';
-            document.getElementById('status').style.display = 'block';
+        document.getElementById('submitBtn').addEventListener('click', async () => {
+            const ten = document.getElementById('tenNhom').value;
+            const imgFile = document.getElementById('imageInput').files[0];
+            const vidFile = document.getElementById('videoInput').files[0];
 
-            const formData = new FormData(e.target);
+            if(!ten || !imgFile || !vidFile) return alert("Vui lòng nhập đủ thông tin!");
+
+            const status = document.getElementById('status');
+            status.innerText = "Đang kết nối bộ xử lý hình ảnh...";
+
             try {
-                const res = await fetch('/api/nop-bai', { method: 'POST', body: formData });
-                const result = await res.json();
-                alert(result.message);
-                if(result.success) window.location.reload();
+                const image = new Image();
+                image.src = URL.createObjectURL(imgFile);
+                
+                image.onload = async () => {
+                    // Kiểm tra xem thư viện đã nạp chưa
+                    if (typeof MINDAR === 'undefined' || !MINDAR.IMAGE.Compiler) {
+                        status.style.color = "red";
+                        status.innerText = "Lỗi: Không thể nạp bộ xử lý AR. Hãy thử nhấn F5.";
+                        return;
+                    }
+
+                    const compiler = new MINDAR.IMAGE.Compiler();
+                    status.innerText = "Đang phân tích đặc điểm nhận diện...";
+                    
+                    await compiler.compileImageTargets([image], (progress) => {
+                        status.innerText = `Đang xử lý: ${Math.round(progress)}%`;
+                    });
+
+                    const mindBuffer = await compiler.exportData();
+                    const formData = new FormData();
+                    formData.append('tenNhom', ten);
+                    formData.append('image', imgFile);
+                    formData.append('video', vidFile);
+                    formData.append('mind', new Blob([mindBuffer]), 'targets.mind');
+
+                    status.innerText = "Đang gửi sản phẩm lên máy chủ...";
+                    const response = await fetch('/api/nop-bai', { method: 'POST', body: formData });
+                    const result = await response.json();
+                    
+                    if(result.success) {
+                        status.style.color = "green";
+                        status.innerText = "🎉 Thành công! Bài của bạn đã có trong Phòng Triển Lãm.";
+                    }
+                };
             } catch (err) {
-                alert("Lỗi kết nối mạng!");
+                console.error(err);
+                status.innerText = "Lỗi hệ thống!";
             }
-            document.getElementById('submitBtn').style.display = 'block';
-            document.getElementById('status').style.display = 'none';
-        };
+        });
     </script>
 </body>
 </html>
