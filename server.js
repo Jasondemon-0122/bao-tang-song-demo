@@ -67,7 +67,10 @@ app.get('/api/danh-sach', (req, res) => {
     res.json(students);
 });
 
-app.listen(3000, () => {
-    console.log('✅ Server đang chạy tại http://localhost:3000');
+// Cho phép Render tự động chọn cổng (PORT), nếu chạy ở máy tính thì dùng cổng 3000
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+    console.log(`✅ Server đang chạy tại cổng ${PORT}`);
     console.log('☁️ Đã kết nối với kho lưu trữ Cloudinary!');
 });
