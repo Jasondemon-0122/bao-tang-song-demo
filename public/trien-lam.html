@@ -3,70 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phòng Triển Lãm Bảo Tàng Sống</title>
+    <title>Phòng Triển Lãm AR - Bảo Tàng Sống</title>
+    <!-- Gọi file giao diện tổng vào đây -->
+    <link rel="stylesheet" href="/style.css">
     <style>
-        body { font-family: sans-serif; background: #eef2f3; padding: 20px; margin: 0; }
-        h1 { text-align: center; color: #333; }
-        #gallery { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; margin-top: 30px; }
-        .card { background: #fff; padding: 15px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 250px; text-align: center; }
-        .card img { width: 100%; height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 15px; cursor: pointer; transition: 0.3s; }
-        .card img:hover { transform: scale(1.05); }
-        .card button { background: #007bff; color: #fff; border: none; padding: 10px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .card button:hover { background: #0056b3; }
-        .nav-link { display: block; text-align: center; margin-bottom: 20px; text-decoration: none; color: #28a745; font-weight: bold; }
+        body { background-color: #fafafa; padding: 0 20px 60px 20px;}
+        .header-bar { display: flex; justify-content: space-between; align-items: center; padding: 24px 0; border-bottom: 1px solid var(--gray-hover); margin-bottom: 40px; }
+        h1 { font-size: 36px; letter-spacing: -0.5px;}
+        .btn-back { background: var(--gray-chip); color: var(--uber-black); text-decoration: none; padding: 10px 20px; border-radius: 999px; font-weight: 500; font-size: 14px; transition: 0.2s; }
+        .btn-back:hover { background: var(--gray-hover); }
         
-        /* Giao diện Màn hình Khóa */
-        #lock-screen {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: #2c3e50; z-index: 10000;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            color: white; font-family: sans-serif; text-align: center;
-        }
-        #lock-screen h2 { margin-bottom: 10px; }
-        #lock-screen input {
-            padding: 12px; font-size: 16px; margin: 15px 0; border-radius: 5px; border: none; text-align: center; outline: none; width: 250px;
-        }
-        #lock-screen button {
-            padding: 12px 25px; font-size: 16px; font-weight: bold; background: #e74c3c; color: white; border: none; border-radius: 5px; cursor: pointer; transition: 0.3s;
-        }
-        #lock-screen button:hover { background: #c0392b; }
-        #passError { color: #ff6b6b; display: none; margin-top: 15px; font-weight: bold; }
-        #back-btn { color: #bdc3c7; margin-top: 20px; text-decoration: none; font-size: 14px; }
-        #back-btn:hover { color: white; text-decoration: underline; }
+        #gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; max-width: 1136px; margin: 0 auto; }
+        
+        .card { background: var(--uber-white); padding: 16px; border-radius: 8px; box-shadow: var(--shadow-light); display: flex; flex-direction: column; }
+        .card img { width: 100%; height: 220px; object-fit: cover; border-radius: 4px; margin-bottom: 16px; }
+        .card h3 { font-size: 20px; margin: 0 0 16px 0; }
+        .card button { padding: 14px; width: 100%; font-size: 16px; margin-top: auto; }
     </style>
 </head>
 <body>
-
-    <!-- Bức tường Mật khẩu -->
     <div id="lock-screen">
-        <h2>🔒 Khu Vực Bảo Mật</h2>
-        <p>Vui lòng nhập mật khẩu để vào phòng triển lãm</p>
-        <input type="password" id="passInput" placeholder="Nhập mật khẩu...">
-        <button onclick="checkPass()">Mở Khóa</button>
-        <p id="passError">❌ Mật khẩu không đúng!</p>
-        <a href="/" id="back-btn">🔙 Quay lại trang nộp bài</a>
+        <h2>🔒 Khu Vực Trưng Bày</h2>
+        <p>Vui lòng nhập mã bảo mật của không gian này.</p>
+        <input type="password" id="passInput" placeholder="Nhập mã bí mật...">
+        <button onclick="checkPass()">Truy cập không gian</button>
+        <p id="passError">Mã truy cập không hợp lệ.</p>
     </div>
 
-    <a href="/" class="nav-link">🔙 Trở lại Nộp Bài</a>
-    <h1>🖼️ Phòng Triển Lãm AR</h1>
-    <div id="gallery"></div>
+    <div style="max-width: 1136px; margin: 0 auto;">
+        <div class="header-bar">
+            <h1>Phòng Triển Lãm</h1>
+            <a href="/" class="btn-back">← Quay lại trạm</a>
+        </div>
+        <div id="gallery"></div>
+    </div>
 
     <script>
-        // Hàm kiểm tra mật khẩu
         function checkPass() {
-            const pass = document.getElementById('passInput').value;
-            
-            // BẠN CÓ THỂ THAY ĐỔI MẬT KHẨU TẠI ĐÂY
-            if(pass === "lichsu11") { 
+            if(document.getElementById('passInput').value === "lichsu11") { 
                 document.getElementById('lock-screen').style.display = "none";
-                loadData(); // Chỉ tải và hiện danh sách bài nộp khi đã mở khóa
+                loadData(); 
             } else {
                 document.getElementById('passError').style.display = "block";
-                document.getElementById('passInput').value = ""; // Xóa trắng ô nhập
             }
         }
 
-        // Bắt sự kiện nhấn phím Enter để mở khóa cho nhanh
         document.getElementById('passInput').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') checkPass();
         });
@@ -75,18 +56,19 @@
             const res = await fetch('/api/danh-sach');
             const students = await res.json();
             const gallery = document.getElementById('gallery');
+            
+            if(students.length === 0) {
+                gallery.innerHTML = "<p style='color: #4b4b4b;'>Chưa có tác phẩm nào được trưng bày tại đây.</p>";
+                return;
+            }
+
             gallery.innerHTML = '';
-
-            if(students.length === 0) return gallery.innerHTML = "Chưa có nhóm nào nộp bài.";
-
             students.forEach(student => {
                 gallery.innerHTML += `
                     <div class="card">
+                        <img src="${student.image}">
                         <h3>${student.name.replace(/_/g, ' ')}</h3>
-                        <a href="${student.image}" target="_blank">
-                            <img src="${student.image}" title="Click để phóng to ảnh">
-                        </a>
-                        <button onclick="openAR('${student.name}', '${student.video}')">📷 Bật Camera AR</button>
+                        <button onclick="openAR('${student.name}', '${student.video}')">Khởi động AR</button>
                     </div>
                 `;
             });

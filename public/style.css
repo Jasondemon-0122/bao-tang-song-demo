@@ -1,0 +1,73 @@
+/* =========================================
+   HỆ THỐNG THIẾT KẾ: BẢO TÀNG SỐNG (UBER THEME)
+   ========================================= */
+
+/* 1. Nhúng Font chữ Inter */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+
+/* 2. Bảng Màu Tiêu Chuẩn */
+:root {
+    --uber-black: #000000;
+    --uber-white: #ffffff;
+    --gray-chip: #efefef;
+    --gray-hover: #e2e2e2;
+    --text-gray: #4b4b4b;
+    --shadow-light: rgba(0, 0, 0, 0.12) 0px 4px 16px 0px;
+}
+
+/* 3. Cài đặt gốc cho toàn trang */
+body { 
+    font-family: 'Inter', sans-serif; 
+    color: var(--uber-black);
+    margin: 0; padding: 0;
+    box-sizing: border-box;
+}
+
+h1, h2, h3 { margin: 0; font-weight: 700; }
+
+/* 4. Quy chuẩn Nút Bấm (Button) */
+button, .btn-primary { 
+    background: var(--uber-black); 
+    color: var(--uber-white); 
+    border: none; 
+    border-radius: 999px; /* Viên thuốc đặc trưng */
+    cursor: pointer; 
+    font-weight: 500; 
+    font-family: 'Inter', sans-serif; 
+    transition: 0.2s;
+}
+button:hover, .btn-primary:hover { background: #333333; }
+button:active, .btn-primary:active { transform: scale(0.98); }
+
+/* 5. Quy chuẩn Ô Nhập Liệu (Input / Select) */
+input[type="text"], input[type="password"], select { 
+    border: 1px solid var(--uber-black); 
+    border-radius: 8px; 
+    font-size: 16px; 
+    font-family: 'Inter', sans-serif;
+    background: var(--uber-white);
+    outline: none; 
+    transition: box-shadow 0.2s;
+}
+input[type="text"]:focus, input[type="password"]:focus, select:focus {
+    box-shadow: inset 0 0 0 1px var(--uber-black);
+}
+input[type="file"] {
+    background: var(--gray-chip); 
+    border-radius: 8px; 
+    font-size: 14px; 
+    color: var(--text-gray); 
+    border: 1px solid transparent;
+}
+
+/* 6. Màn Hình Khóa Bảo Mật (Dùng chung cho nhiều trang) */
+#lock-screen { 
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
+    background: var(--uber-white); z-index: 10000; 
+    display: flex; flex-direction: column; justify-content: center; align-items: center; 
+}
+#lock-screen h2 { font-size: 36px; margin-bottom: 8px;}
+#lock-screen p { color: var(--text-gray); margin-bottom: 32px; font-size: 16px;}
+#lock-screen input { padding: 16px; margin-bottom: 16px; text-align: center; width: 300px; }
+#lock-screen button { padding: 16px 32px; font-size: 18px; width: 300px; }
+#passError { color: #e74c3c; font-weight: 500; display: none; margin-top: 16px; }
