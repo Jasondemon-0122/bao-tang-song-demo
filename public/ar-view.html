@@ -36,22 +36,24 @@
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
-        const id = urlParams.get('id');
+        // ĐÃ SỬA: Lấy link file .mind trực tiếp từ URL Cloudinary thay vì lấy id
+        const mind = urlParams.get('mind'); 
         const vid = urlParams.get('vid');
         
-        if(!id || !vid) alert("Lỗi: Không tìm thấy bài học sinh!");
+        if(!mind || !vid) alert("Lỗi: Không tìm thấy dữ liệu bài học sinh!");
 
         document.getElementById('start-btn').addEventListener('click', () => {
             document.getElementById('start-screen').style.display = 'none';
             
+            // ĐÃ SỬA: imageTargetSrc giờ đây sẽ trỏ thẳng tới link đám mây (biến ${mind})
             document.getElementById('scene-container').innerHTML = `
-                <a-scene mindar-image="imageTargetSrc: /data/${id}/targets.mind; autoStart: true;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+                <a-scene mindar-image="imageTargetSrc: ${mind}; autoStart: true;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
                   <a-assets>
                     <video id="userVideo" src="${vid}" loop crossorigin="anonymous" playsinline webkit-playsinline></video>
                   </a-assets>
                   <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
                   <a-entity mindar-image-target="targetIndex: 0">
-                    <!-- 2. SỬA LỖI MẤT HÌNH: Dùng a-plane (mặt phẳng) thay vì a-video -->
+                    <!-- SỬA LỖI MẤT HÌNH: Dùng a-plane (mặt phẳng) thay vì a-video -->
                     <a-plane material="src: #userVideo" position="0 0 0" height="1" width="1"></a-plane>
                   </a-entity>
                 </a-scene>
