@@ -4,11 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bảo Tàng Sống - Trạm Tiếp Nhận</title>
-    <!-- Gọi file giao diện tổng -->
     <link rel="stylesheet" href="/style.css">
     
-    <!-- BỔ SUNG: Gọi thư viện AI của MindAR để tự động tạo file .mind trên trình duyệt -->
-    <script src="/mindar/mindar-image.prod.js"></script>
+    <!-- ĐÃ XÓA thẻ <script src="..."> bị lỗi ở đây -->
     
     <style>
         body { background-color: var(--uber-white); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px;}
@@ -42,8 +40,6 @@
                 <label>🎬 Video lồng tiếng (Tối đa 15MB)</label>
                 <input type="file" name="video" accept="video/mp4" required>
             </div>
-            
-            <!-- ĐÃ XÓA Ô NHẬP FILE .MIND CỦA HỌC SINH -->
 
             <button type="submit" id="submitBtn" class="btn-primary">Tạo bản sao AR</button>
             <p id="status">Đang chuẩn bị dữ liệu...</p>
@@ -54,7 +50,11 @@
         </div>
     </div>
 
-    <script>
+    <!-- ĐÃ SỬA: Khai báo type="module" để trình duyệt cho phép chạy công nghệ AI hiện đại -->
+    <script type="module">
+        // Nhập khẩu trực tiếp công cụ Compiler từ máy chủ quốc tế
+        import { Compiler } from 'https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js';
+
         document.getElementById('uploadForm').onsubmit = async (e) => {
             e.preventDefault();
             const submitBtn = document.getElementById('submitBtn');
@@ -63,46 +63,46 @@
             submitBtn.style.display = 'none';
             statusText.style.display = 'block';
             statusText.style.color = '#e74c3c';
-            statusText.innerText = "Đang phân tích hình ảnh AR (0%)...";
+            statusText.innerText = "Đang nạp ảnh vào hệ thống...";
 
             try {
-                // 1. Khởi tạo gói dữ liệu
                 const formData = new FormData(e.target);
-                
-                // 2. Lấy bức ảnh học sinh vừa chọn để xử lý
                 const imageFile = formData.get('image');
+                
                 const img = new Image();
                 img.src = URL.createObjectURL(imageFile);
                 await new Promise((resolve) => { img.onload = resolve; });
 
-                // 3. TỰ ĐỘNG BIÊN DỊCH FILE .MIND NGẦM
-                const compiler = new window.MINDAR.IMAGE.Compiler();
+                statusText.innerText = "Đang phân tích hình ảnh AR (0%)...";
+                
+                // Kích hoạt bộ não AI vừa được nhập khẩu ở trên
+                const compiler = new Compiler();
                 await compiler.compileImageTargets([img], (progress) => {
-                    statusText.innerText = `Đang tạo dữ liệu AR (${Math.round(progress)}%)...`;
+                    statusText.innerText = `Đang tạo dữ liệu AR (${Math.round(progress)}%)... (Máy yếu có thể hơi giật)`;
                 });
 
-                // 4. Đóng gói file .mind vừa tạo vào form ẩn
                 const exportedData = compiler.exportData();
                 const mindBlob = new Blob([exportedData], { type: 'application/octet-stream' });
                 formData.append('mind', mindBlob, 'targets.mind');
 
-                // 5. Gửi toàn bộ (Ảnh + Video + File Mind ẩn) lên máy chủ
-                statusText.innerText = "Đang đồng bộ lên đám mây, vui lòng giữ máy...";
+                statusText.innerText = "Đang đóng gói và đẩy lên đám mây...";
                 const res = await fetch('/api/nop-bai', { method: 'POST', body: formData });
                 const result = await res.json();
                 
-                statusText.style.color = '#28a745';
-                statusText.innerText = "Hoàn tất!";
-                alert(result.message);
-                
-                if(result.success) window.location.reload();
+                if(result.success) {
+                    statusText.style.color = '#28a745';
+                    statusText.innerText = "Hoàn tất xuất sắc!";
+                    alert(result.message);
+                    window.location.reload();
+                } else {
+                    throw new Error(result.message);
+                }
             } catch (err) {
-                console.error(err);
-                alert("Lỗi: Quá trình xử lý ảnh thất bại hoặc mất mạng!");
+                console.error("Lỗi chi tiết:", err);
+                statusText.innerText = "Thất bại!";
+                alert(`Lỗi: ${err.message}. \n\nMẹo: Hãy thử nhấn phím F5 để tải lại trang, hoặc chọn một bức ảnh có dung lượng nhẹ hơn.`);
+                submitBtn.style.display = 'block';
             }
-            
-            submitBtn.style.display = 'block';
-            statusText.style.display = 'none';
         };
     </script>
 </body>
