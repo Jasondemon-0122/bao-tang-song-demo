@@ -6,39 +6,61 @@
     <title>Bảo Tàng Sống - Trạm Tiếp Nhận</title>
     <link rel="stylesheet" href="/style.css">
     
-    <!-- ĐÃ XÓA thẻ <script src="..."> bị lỗi ở đây -->
-    
     <style>
-        body { background-color: var(--uber-white); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px;}
-        .container { padding: 40px 32px; border-radius: 12px; box-shadow: var(--shadow-light); width: 100%; max-width: 420px; }
+        body { background-color: var(--uber-white); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 40px 20px;}
+        .container { padding: 40px 32px; border-radius: 12px; box-shadow: var(--shadow-light); width: 100%; max-width: 460px; }
         p.subtitle { color: var(--text-gray); font-size: 16px; margin: 0 0 32px 0; }
-        .input-group { margin-bottom: 20px; text-align: left; }
-        .input-group label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 8px; }
+        .input-group { margin-bottom: 24px; text-align: left; }
+        .input-group label { display: block; font-size: 14px; font-weight: 700; margin-bottom: 8px; color: var(--uber-black);}
+        .sub-label { display: block; font-size: 12px; font-weight: 400; color: var(--text-gray); margin-bottom: 8px;}
         input[type="text"], select, input[type="file"] { width: 100%; padding: 14px 16px; box-sizing: border-box;}
+        textarea { width: 100%; padding: 14px 16px; box-sizing: border-box; border: 1px solid var(--uber-black); border-radius: 8px; font-family: 'Inter', sans-serif; resize: vertical; min-height: 80px;}
         .btn-primary { padding: 16px 24px; width: 100%; margin-top: 10px; }
         .nav-link { display: inline-block; margin-top: 24px; color: var(--uber-black); text-decoration: none; font-weight: 500; font-size: 16px; background: var(--gray-chip); padding: 12px 24px; border-radius: 999px; transition: 0.2s; }
         .nav-link:hover { background: var(--gray-hover); }
         #status { color: #28a745; font-weight: 500; display: none; margin-top: 16px; font-size: 14px; text-align: center;}
+        
+        .hotspot-box { background: #fafafa; padding: 16px; border-radius: 8px; border: 1px dashed #afafaf; margin-bottom: 16px;}
     </style>
 </head>
 <body>
     <div class="container">
         <h2>🏛️ Gửi Tác Phẩm</h2>
-        <p class="subtitle">Khởi tạo nhân vật lịch sử của bạn.</p>
+        <p class="subtitle">Khởi tạo không gian AR của bạn.</p>
 
         <form id="uploadForm">
             <div class="input-group">
-                <input type="text" name="tenNhom" id="tenNhom" placeholder="Tên nhóm của bạn (VD: Nhóm 1)" required>
+                <label>Tên nhóm của bạn</label>
+                <input type="text" name="tenNhom" placeholder="VD: Nhóm 1" required>
             </div>
             
             <div class="input-group">
-                <label>🖼️ Ảnh chân dung (Định dạng .jpg/.png)</label>
+                <label>🖼️ Ảnh chân dung (.jpg/.png)</label>
                 <input type="file" name="image" id="imageInput" accept="image/*" required>
             </div>
             
             <div class="input-group">
-                <label>🎬 Video lồng tiếng (Tối đa 15MB)</label>
+                <label>🎬 Video thuyết minh (Tối đa 15MB)</label>
                 <input type="file" name="video" accept="video/mp4" required>
+            </div>
+
+            <!-- Khu vực nhập nội dung Điểm chạm -->
+            <div class="input-group">
+                <label>📍 Điểm chạm 1 (Xuất hiện bên trái AR)</label>
+                <span class="sub-label">Giải thích một từ khóa khó hoặc sự kiện phụ.</span>
+                <div class="hotspot-box">
+                    <input type="text" name="hs1Title" placeholder="Tiêu đề (VD: Góc Giải Nghĩa 📚)" style="margin-bottom: 8px;" required>
+                    <textarea name="hs1Content" placeholder="Nội dung chi tiết (VD: Samurai là gì...)" required></textarea>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>📍 Điểm chạm 2 (Xuất hiện bên phải AR)</label>
+                <span class="sub-label">Đưa ra một câu hỏi hoặc thông tin ẩn.</span>
+                <div class="hotspot-box">
+                    <input type="text" name="hs2Title" placeholder="Tiêu đề (VD: Bí mật Lịch sử 🔍)" style="margin-bottom: 8px;" required>
+                    <textarea name="hs2Content" placeholder="Nội dung chi tiết..." required></textarea>
+                </div>
             </div>
 
             <button type="submit" id="submitBtn" class="btn-primary">Tạo bản sao AR</button>
@@ -50,9 +72,7 @@
         </div>
     </div>
 
-    <!-- ĐÃ SỬA: Khai báo type="module" để trình duyệt cho phép chạy công nghệ AI hiện đại -->
     <script type="module">
-        // Nhập khẩu trực tiếp công cụ Compiler từ máy chủ quốc tế
         import { Compiler } from 'https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js';
 
         document.getElementById('uploadForm').onsubmit = async (e) => {
@@ -75,10 +95,9 @@
 
                 statusText.innerText = "Đang phân tích hình ảnh AR (0%)...";
                 
-                // Kích hoạt bộ não AI vừa được nhập khẩu ở trên
                 const compiler = new Compiler();
                 await compiler.compileImageTargets([img], (progress) => {
-                    statusText.innerText = `Đang tạo dữ liệu AR (${Math.round(progress)}%)... (Máy yếu có thể hơi giật)`;
+                    statusText.innerText = `Đang tạo dữ liệu AR (${Math.round(progress)}%)...`;
                 });
 
                 const exportedData = compiler.exportData();
@@ -100,7 +119,7 @@
             } catch (err) {
                 console.error("Lỗi chi tiết:", err);
                 statusText.innerText = "Thất bại!";
-                alert(`Lỗi: ${err.message}. \n\nMẹo: Hãy thử nhấn phím F5 để tải lại trang, hoặc chọn một bức ảnh có dung lượng nhẹ hơn.`);
+                alert(`Lỗi: ${err.message}.`);
                 submitBtn.style.display = 'block';
             }
         };

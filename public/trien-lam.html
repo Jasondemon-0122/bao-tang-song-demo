@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Phòng Triển Lãm AR - Bảo Tàng Sống</title>
-    <!-- Gọi file giao diện tổng vào đây -->
     <link rel="stylesheet" href="/style.css">
     <style>
         body { background-color: #fafafa; padding: 0 20px 60px 20px;}
@@ -68,14 +67,15 @@
                     <div class="card">
                         <img src="${student.image}">
                         <h3>${student.name.replace(/_/g, ' ')}</h3>
-                        <button onclick="openAR('${student.name}', '${student.video}')">Khởi động AR</button>
+                        <!-- Chỉ cần truyền Tên Nhóm (id) -->
+                        <button onclick="openAR('${student.name}')">Khởi động AR</button>
                     </div>
                 `;
             });
         }
 
-        function openAR(name, videoUrl) {
-            window.location.href = `/ar-view.html?id=${name}&vid=${encodeURIComponent(videoUrl)}`;
+        function openAR(name) {
+            window.location.href = `/ar-view.html?id=${name}`;
         }
     </script>
 </body>
