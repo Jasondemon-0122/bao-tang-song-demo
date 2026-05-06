@@ -9,34 +9,60 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <style> 
         body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: transparent; font-family: 'Inter', sans-serif;} 
-        
         #scene-container { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; }
         
-        /* TIÊU DIỆT HOÀN TOÀN CÁC LỚP MÀNG CHẮN CẢM ỨNG */
+        /* Chống lỗi cảm ứng */
         .mindar-ui-overlay { display: none !important; pointer-events: none !important; }
         canvas.a-canvas { pointer-events: auto !important; z-index: 10 !important; }
 
-        #start-screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000000; z-index: 9999;
-            display: flex; flex-direction: column; justify-content: center; align-items: center; 
-            color: #ffffff; text-align: center; padding: 20px; box-sizing: border-box;
-        }
+        /* Màn hình Start */
+        #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000000; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #ffffff; text-align: center; padding: 20px; box-sizing: border-box; }
         #start-screen h2 { font-size: 32px; margin-bottom: 8px; font-weight: 700;}
         #start-screen p { font-size: 16px; color: #afafaf; margin-bottom: 32px; line-height: 1.5;}
         #start-btn { padding: 16px 32px; font-size: 18px; font-weight: 500; background: #ffffff; color: #000000; border: none; border-radius: 999px; cursor: pointer; transition: 0.2s; font-family: inherit;}
         #start-btn:active { transform: scale(0.95); }
 
-        #info-modal {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.85); z-index: 10000;
-            display: none; flex-direction: column; justify-content: center; align-items: center; 
-            padding: 20px; box-sizing: border-box; text-align: center; color: #000000;
+        /* =========================================
+           HIỆU ỨNG TRƯỢT 2 BÊN (SLIDE OUT PANELS)
+           ========================================= */
+        .side-panel {
+            position: absolute;
+            top: 50%;
+            /* Bắt đầu thu nhỏ và mờ đi ở chính giữa màn hình */
+            transform: translateY(-50%) scale(0.7);
+            width: calc(50vw - 24px); /* Chia đôi màn hình, chừa lề */
+            max-width: 280px;
+            min-width: 150px;
+            /* Hiệu ứng kính mờ (Glassmorphism) cực đẹp */
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            padding: 20px 16px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            /* Chuyển động đàn hồi */
+            transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1.1);
+            z-index: 10000;
+            opacity: 0;
+            pointer-events: none;
+            color: #000000;
         }
-        .info-card { background: #ffffff; padding: 32px 24px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
-        .info-card h3 { font-size: 24px; margin: 0 0 16px 0; font-weight: 700; color: #000000;}
-        .info-card p { font-size: 16px; color: #4b4b4b; line-height: 1.5; margin-bottom: 32px;}
-        .btn-black { background: #000000; color: #ffffff; border: none; padding: 14px 20px; width: 100%; border-radius: 999px; font-weight: 500; font-size: 16px; cursor: pointer; font-family: inherit;}
+
+        /* Điểm neo cho 2 bảng */
+        #panel-left { left: 50%; margin-left: -10%; }
+        #panel-right { right: 50%; margin-right: -10%; }
+
+        /* Kích hoạt trượt ra sát mép màn hình */
+        #panel-left.show { left: 12px; margin-left: 0; opacity: 1; transform: translateY(-50%) scale(1); pointer-events: auto; }
+        #panel-right.show { right: 12px; margin-right: 0; opacity: 1; transform: translateY(-50%) scale(1); pointer-events: auto; }
+
+        /* Trình bày chữ bên trong Bảng */
+        .side-panel h3 { font-size: 16px; margin: 0 0 8px 0; font-weight: 700; line-height: 1.3; padding-right: 20px; color: #000000;}
+        .side-panel .content-box { font-size: 13px; color: #333333; line-height: 1.5; max-height: 40vh; overflow-y: auto; }
+        
+        /* Nút X Đóng Bảng */
+        .close-btn { position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 18px; color: #888; cursor: pointer; padding: 0; line-height: 1;}
+        .close-btn:active { color: #000; }
     </style>
   </head>
   <body>
@@ -46,12 +72,18 @@
         <button id="start-btn">Mở Camera Khám Phá</button>
     </div>
 
-    <div id="info-modal">
-        <div class="info-card">
-            <h3 id="info-title">Tiêu đề</h3>
-            <p id="info-content">Nội dung...</p>
-            <button class="btn-black" onclick="closeInfo()">Đã hiểu</button>
-        </div>
+    <!-- BẢNG THÔNG TIN BÊN TRÁI -->
+    <div class="side-panel" id="panel-left">
+        <button class="close-btn" onclick="closePanel('left')">✖</button>
+        <h3 id="title-left">Tiêu đề</h3>
+        <div class="content-box" id="content-left">Nội dung...</div>
+    </div>
+
+    <!-- BẢNG THÔNG TIN BÊN PHẢI -->
+    <div class="side-panel" id="panel-right">
+        <button class="close-btn" onclick="closePanel('right')">✖</button>
+        <h3 id="title-right">Tiêu đề</h3>
+        <div class="content-box" id="content-right">Nội dung...</div>
     </div>
 
     <div id="scene-container"></div>
@@ -61,30 +93,35 @@
         const id = urlParams.get('id');
         if(!id) alert("Lỗi: Không tìm thấy bài học sinh!");
 
-        // Dạy hệ thống bắt cảm ứng cực nhạy
+        // Dạy hệ thống phân biệt chạm trái / chạm phải
         AFRAME.registerComponent('hotspot-action', {
             schema: {
                 title: {type: 'string', default: 'Thông tin'},
-                content: {type: 'string', default: 'Nội dung...'}
+                content: {type: 'string', default: 'Nội dung...'},
+                side: {type: 'string', default: 'left'} // Cấu hình bên trượt ra
             },
             init: function () {
                 const triggerInfo = (e) => {
-                    // Chặn hành vi nhấp nháy hoặc cuộn trang của điện thoại
                     if(e) e.preventDefault(); 
                     
-                    document.getElementById('info-title').innerText = decodeURIComponent(this.data.title);
-                    document.getElementById('info-content').innerText = decodeURIComponent(this.data.content);
-                    document.getElementById('info-modal').style.display = 'flex';
+                    const side = this.data.side; // Lấy 'left' hoặc 'right'
+                    
+                    // Điền dữ liệu vào đúng bảng của bên đó
+                    document.getElementById('title-' + side).innerText = decodeURIComponent(this.data.title);
+                    document.getElementById('content-' + side).innerText = decodeURIComponent(this.data.content);
+                    
+                    // Bắn hiệu ứng hiển thị bảng
+                    document.getElementById('panel-' + side).classList.add('show');
                 };
                 
-                // Lắng nghe cả sự kiện nhấn chuột và chạm tay lên màn hình
                 this.el.addEventListener('click', triggerInfo);
                 this.el.addEventListener('touchstart', triggerInfo);
             }
         });
 
-        window.closeInfo = function() {
-            document.getElementById('info-modal').style.display = 'none';
+        // Hàm Đóng Bảng
+        window.closePanel = function(side) {
+            document.getElementById('panel-' + side).classList.remove('show');
         }
 
         document.getElementById('start-btn').addEventListener('click', async () => {
@@ -93,7 +130,6 @@
             startBtn.disabled = true;
 
             try {
-                // Thêm đoạn mã thời gian để CHỐNG LƯU ĐỆM JSON (đảm bảo luôn tải text mới nhất)
                 const res = await fetch(`/data/${id}/links.json?t=` + new Date().getTime());
                 const studentData = await res.json();
 
@@ -104,7 +140,6 @@
                 const safeHs2Title = encodeURIComponent(studentData.hs2Title);
                 const safeHs2Content = encodeURIComponent(studentData.hs2Content);
 
-                // CHÚ Ý SỰ KHÁC BIỆT TẠI THẺ <a-scene>: Chuyển cursor và raycaster ra đây
                 document.getElementById('scene-container').innerHTML = `
                     <a-scene mindar-image="imageTargetSrc: /data/${id}/targets.mind; autoStart: true; uiLoading: no; uiScanning: no; uiError: no;" 
                              color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" 
@@ -118,18 +153,20 @@
                       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
                       
                       <a-entity mindar-image-target="targetIndex: 0">
+                        <!-- Video trung tâm -->
                         <a-plane material="src: #userVideo" position="0 0 0" height="1" width="1"></a-plane>
 
-                        <!-- ĐIỂM CHẠM 1: Hình tròn lớn bán kính 0.3 (hứng cảm ứng), opacity 0.01 để chống lỗi tàng hình xuyên thấu -->
-                        <a-entity class="clickable" position="-0.7 0 0.05" geometry="primitive: circle; radius: 0.3" material="color: #ffffff; opacity: 0.01; transparent: true" hotspot-action="title: ${safeHs1Title}; content: ${safeHs1Content}">
-                            <!-- Dấu cộng nhỏ bên trong chỉ để hiển thị -->
+                        <!-- ĐIỂM CHẠM BÊN TRÁI (Khai báo side: left) -->
+                        <a-entity class="clickable" position="-0.7 0 0.05" geometry="primitive: circle; radius: 0.3" material="color: #ffffff; opacity: 0.01; transparent: true" 
+                                  hotspot-action="title: ${safeHs1Title}; content: ${safeHs1Content}; side: left">
                             <a-circle radius="0.12" color="#ffffff" opacity="0.9" animation="property: scale; to: 1.15 1.15 1.15; dir: alternate; dur: 800; loop: true">
                                 <a-text value="+" align="center" position="0 0 0.01" color="#000000" scale="0.8 0.8 0.8" font="kelsonsans"></a-text>
                             </a-circle>
                         </a-entity>
 
-                        <!-- ĐIỂM CHẠM 2 -->
-                        <a-entity class="clickable" position="0.7 0 0.05" geometry="primitive: circle; radius: 0.3" material="color: #ffffff; opacity: 0.01; transparent: true" hotspot-action="title: ${safeHs2Title}; content: ${safeHs2Content}">
+                        <!-- ĐIỂM CHẠM BÊN PHẢI (Khai báo side: right) -->
+                        <a-entity class="clickable" position="0.7 0 0.05" geometry="primitive: circle; radius: 0.3" material="color: #ffffff; opacity: 0.01; transparent: true" 
+                                  hotspot-action="title: ${safeHs2Title}; content: ${safeHs2Content}; side: right">
                             <a-circle radius="0.12" color="#ffffff" opacity="0.9" animation="property: scale; to: 1.15 1.15 1.15; dir: alternate; dur: 800; loop: true">
                                 <a-text value="+" align="center" position="0 0 0.01" color="#000000" scale="0.8 0.8 0.8" font="kelsonsans"></a-text>
                             </a-circle>
