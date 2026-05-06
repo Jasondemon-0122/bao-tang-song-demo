@@ -13,6 +13,10 @@
         body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: transparent; font-family: 'Inter', sans-serif;} 
         #scene-container { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; }
         
+        /* BẮT BUỘC: Xuyên thủng lớp mặt nạ tàng hình của hệ thống nhận diện ảnh */
+        .mindar-ui-overlay { pointer-events: none !important; }
+        .a-canvas { pointer-events: auto !important; }
+
         #start-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: #000000; z-index: 9999;
@@ -59,18 +63,21 @@
         const id = urlParams.get('id');
         if(!id) alert("Lỗi: Không tìm thấy bài học sinh!");
 
-        // Giải mã chuỗi để đảm bảo chống lỗi ngoặc kép
         AFRAME.registerComponent('hotspot-action', {
             schema: {
                 title: {type: 'string', default: 'Thông tin'},
                 content: {type: 'string', default: 'Nội dung...'}
             },
             init: function () {
-                this.el.addEventListener('click', () => {
+                const triggerInfo = () => {
                     document.getElementById('info-title').innerText = decodeURIComponent(this.data.title);
                     document.getElementById('info-content').innerText = decodeURIComponent(this.data.content);
                     document.getElementById('info-modal').style.display = 'flex';
-                });
+                };
+                
+                // NÂNG CẤP: Bắt cả sự kiện click (trên máy tính) và chạm tay (trên điện thoại di động)
+                this.el.addEventListener('click', triggerInfo);
+                this.el.addEventListener('touchstart', triggerInfo);
             }
         });
 
@@ -78,32 +85,34 @@
             document.getElementById('info-modal').style.display = 'none';
         }
 
-        // Bắt đầu quá trình tải dữ liệu và chiếu AR
         document.getElementById('start-btn').addEventListener('click', async () => {
             const startBtn = document.getElementById('start-btn');
             startBtn.innerText = "Đang tải dữ liệu nhóm...";
             startBtn.disabled = true;
 
             try {
-                // Tự động tìm vào thư mục của nhóm để lấy Text Điểm chạm
                 const res = await fetch(`/data/${id}/links.json`);
                 const studentData = await res.json();
 
                 document.getElementById('start-screen').style.display = 'none';
                 
-                // Mã hóa dữ liệu trước khi đưa vào AR để tránh vỡ Code
                 const safeHs1Title = encodeURIComponent(studentData.hs1Title);
                 const safeHs1Content = encodeURIComponent(studentData.hs1Content);
                 const safeHs2Title = encodeURIComponent(studentData.hs2Title);
                 const safeHs2Content = encodeURIComponent(studentData.hs2Content);
 
+                // NÂNG CẤP: Đặt cursor gắn thẳng vào scene và tắt UI màng chắn của MindAR
                 document.getElementById('scene-container').innerHTML = `
-                    <a-scene mindar-image="imageTargetSrc: /data/${id}/targets.mind; autoStart: true;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+                    <a-scene mindar-image="imageTargetSrc: /data/${id}/targets.mind; autoStart: true; uiLoading: no; uiScanning: no; uiError: no;" 
+                             color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" 
+                             vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false"
+                             cursor="rayOrigin: mouse; fuse: false" raycaster="objects: .clickable">
+                      
                       <a-assets>
                         <video id="userVideo" src="${studentData.video}" crossorigin="anonymous" playsinline webkit-playsinline loop></video>
                       </a-assets>
                       
-                      <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;" raycaster="objects: .clickable"></a-camera>
+                      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
                       
                       <a-entity mindar-image-target="targetIndex: 0">
                         <!-- Video -->
