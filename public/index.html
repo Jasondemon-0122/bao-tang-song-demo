@@ -6,15 +6,11 @@
     <title>Bảo Tàng Sống - Trạm Tiếp Nhận</title>
     <link rel="stylesheet" href="/style.css">
     
-    <!-- Khai báo type="module" và đưa Compiler ra window để form sử dụng -->
-    <script type="module">
-        import { Compiler } from 'https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js';
-        window.MindCompiler = Compiler;
-    </script>
+    <!-- ĐÃ XÓA thẻ <script src="..."> bị lỗi ở đây -->
     
     <style>
-        body { background-color: var(--uber-white); display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 40px 20px;}
-        .container { padding: 40px 32px; border-radius: 12px; box-shadow: var(--shadow-light); width: 100%; max-width: 420px; position: relative; z-index: 10;}
+        body { background-color: var(--uber-white); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px;}
+        .container { padding: 40px 32px; border-radius: 12px; box-shadow: var(--shadow-light); width: 100%; max-width: 420px; }
         p.subtitle { color: var(--text-gray); font-size: 16px; margin: 0 0 32px 0; }
         .input-group { margin-bottom: 20px; text-align: left; }
         .input-group label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 8px; }
@@ -23,32 +19,12 @@
         .nav-link { display: inline-block; margin-top: 24px; color: var(--uber-black); text-decoration: none; font-weight: 500; font-size: 16px; background: var(--gray-chip); padding: 12px 24px; border-radius: 999px; transition: 0.2s; }
         .nav-link:hover { background: var(--gray-hover); }
         #status { color: #28a745; font-weight: 500; display: none; margin-top: 16px; font-size: 14px; text-align: center;}
-        
-        /* Giao diện nút và Modal Xưởng 3D */
-        .btn-ai { background: #000000; color: #ffffff; border: 1px solid #000000; border-radius: 999px; padding: 14px 20px; font-weight: 500; width: 100%; cursor: pointer; margin-bottom: 30px; font-family: inherit; font-size: 16px; transition: 0.2s;}
-        .btn-ai:hover { background: #333333; }
-        
-        #ai-modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; flex-direction: column;}
-        #ai-modal iframe { width: 95%; max-width: 1200px; height: 85vh; border-radius: 12px; border: none; background: white;}
-        .close-btn { background: white; color: black; padding: 12px 24px; border-radius: 999px; cursor: pointer; font-weight: bold; margin-bottom: 15px; border: none;}
     </style>
 </head>
 <body>
-
-    <!-- CỬA SỔ XƯỞNG 3D HUGGING FACE -->
-    <div id="ai-modal">
-        <button class="close-btn" onclick="document.getElementById('ai-modal').style.display='none'">✖ Đóng Xưởng 3D</button>
-        <iframe src="https://vast-ai-triposg.hf.space" frameborder="0"></iframe>
-    </div>
-
     <div class="container">
         <h2>🏛️ Gửi Tác Phẩm</h2>
         <p class="subtitle">Khởi tạo nhân vật lịch sử của bạn.</p>
-
-        <!-- Nút gọi AI -->
-        <button class="btn-ai" type="button" onclick="document.getElementById('ai-modal').style.display='flex'">
-            ✨ Mở Xưởng AI Chế Tác 3D
-        </button>
 
         <form id="uploadForm">
             <div class="input-group">
@@ -56,13 +32,13 @@
             </div>
             
             <div class="input-group">
-                <label>🖼️ Ảnh chân dung gốc (.jpg/.png)</label>
+                <label>🖼️ Ảnh chân dung (Định dạng .jpg/.png)</label>
                 <input type="file" name="image" id="imageInput" accept="image/*" required>
             </div>
             
             <div class="input-group">
-                <label>🧊 Mô hình 3D (File .glb tải từ Xưởng AI)</label>
-                <input type="file" name="model3d" accept=".glb" required>
+                <label>🎬 Video lồng tiếng (Tối đa 15MB)</label>
+                <input type="file" name="video" accept="video/mp4" required>
             </div>
 
             <button type="submit" id="submitBtn" class="btn-primary">Tạo bản sao AR</button>
@@ -74,7 +50,11 @@
         </div>
     </div>
 
-    <script>
+    <!-- ĐÃ SỬA: Khai báo type="module" để trình duyệt cho phép chạy công nghệ AI hiện đại -->
+    <script type="module">
+        // Nhập khẩu trực tiếp công cụ Compiler từ máy chủ quốc tế
+        import { Compiler } from 'https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js';
+
         document.getElementById('uploadForm').onsubmit = async (e) => {
             e.preventDefault();
             const submitBtn = document.getElementById('submitBtn');
@@ -83,41 +63,44 @@
             submitBtn.style.display = 'none';
             statusText.style.display = 'block';
             statusText.style.color = '#e74c3c';
-            statusText.innerText = "Đang kiểm tra dữ liệu...";
+            statusText.innerText = "Đang nạp ảnh vào hệ thống...";
 
             try {
-                if (!window.MindCompiler) throw new Error("Chưa tải xong bộ não AI, vui lòng đợi 1 lát hoặc F5 lại trang.");
-
                 const formData = new FormData(e.target);
                 const imageFile = formData.get('image');
                 
-                statusText.innerText = "Đang nạp ảnh vào hệ thống...";
                 const img = new Image();
                 img.src = URL.createObjectURL(imageFile);
                 await new Promise((resolve) => { img.onload = resolve; });
 
-                statusText.innerText = "Đang phân tích dữ liệu AR (0%)...";
-                const compiler = new window.MindCompiler();
+                statusText.innerText = "Đang phân tích hình ảnh AR (0%)...";
+                
+                // Kích hoạt bộ não AI vừa được nhập khẩu ở trên
+                const compiler = new Compiler();
                 await compiler.compileImageTargets([img], (progress) => {
-                    statusText.innerText = `Đang tạo lưới AR (${Math.round(progress)}%)...`;
+                    statusText.innerText = `Đang tạo dữ liệu AR (${Math.round(progress)}%)... (Máy yếu có thể hơi giật)`;
                 });
 
                 const exportedData = compiler.exportData();
                 const mindBlob = new Blob([exportedData], { type: 'application/octet-stream' });
                 formData.append('mind', mindBlob, 'targets.mind');
 
-                statusText.innerText = "Đang đóng gói và tải lên đám mây...";
+                statusText.innerText = "Đang đóng gói và đẩy lên đám mây...";
                 const res = await fetch('/api/nop-bai', { method: 'POST', body: formData });
                 const result = await res.json();
                 
                 if(result.success) {
                     statusText.style.color = '#28a745';
-                    statusText.innerText = "Hoàn tất!";
+                    statusText.innerText = "Hoàn tất xuất sắc!";
                     alert(result.message);
                     window.location.reload();
-                } else throw new Error(result.message);
+                } else {
+                    throw new Error(result.message);
+                }
             } catch (err) {
-                alert(`Lỗi: ${err.message}`);
+                console.error("Lỗi chi tiết:", err);
+                statusText.innerText = "Thất bại!";
+                alert(`Lỗi: ${err.message}. \n\nMẹo: Hãy thử nhấn phím F5 để tải lại trang, hoặc chọn một bức ảnh có dung lượng nhẹ hơn.`);
                 submitBtn.style.display = 'block';
             }
         };
