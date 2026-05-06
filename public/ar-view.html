@@ -3,35 +3,82 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta charset="UTF-8">
+    <title>Trải nghiệm AR - Lịch Sử Lớp 11</title>
     <script src="./js/aframe.min.js"></script>
-    <script src="/mindar/mindar-image-aframe.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <style> 
-        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: transparent; } 
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: transparent; font-family: 'Inter', sans-serif;} 
+        #scene-container { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; transition: filter 0.5s ease; }
         
-        /* 1. SỬA LỖI MÀN HÌNH TRẮNG: Ép khung 3D tràn viền tuyệt đối */
-        #scene-container {
-            position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1;
+        /* HIỆU ỨNG Ý TƯỞNG 15: Lăng Kính Thời Gian */
+        .time-filter-on #scene-container {
+            filter: sepia(0.8) contrast(1.2) grayscale(0.4);
+        }
+
+        /* Nút bật tắt Lăng Kính */
+        #filter-btn {
+            position: absolute; top: 20px; right: 20px; z-index: 999;
+            background: #ffffff; color: #000000; border: 1px solid #000000;
+            padding: 12px 20px; border-radius: 999px; font-weight: 500; font-size: 14px;
+            cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.3s;
+            font-family: inherit; display: none; /* Chỉ hiện sau khi vào AR */
         }
 
         #start-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(44, 62, 80, 0.95); z-index: 9999;
-            display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; font-family: sans-serif; text-align: center; padding: 20px; box-sizing: border-box;
+            background: #000000; z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            color: #ffffff; text-align: center; padding: 20px; box-sizing: border-box;
         }
-        #start-btn {
-            padding: 15px 30px; font-size: 18px; font-weight: bold; background: #e74c3c; color: white; border: none; border-radius: 8px; margin-top: 20px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: 0.3s;
-        }
+        #start-screen h2 { font-size: 32px; margin-bottom: 8px; font-weight: 700;}
+        #start-screen p { font-size: 16px; color: #afafaf; margin-bottom: 32px; line-height: 1.5;}
+        #start-btn { padding: 16px 32px; font-size: 18px; font-weight: 500; background: #ffffff; color: #000000; border: none; border-radius: 999px; cursor: pointer; transition: 0.2s; font-family: inherit;}
         #start-btn:active { transform: scale(0.95); }
+
+        /* GIAO DIỆN Ý TƯỞNG 13: Ngã Rẽ Lịch Sử */
+        #quiz-modal {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85); z-index: 10000;
+            display: none; flex-direction: column; justify-content: center; align-items: center; 
+            padding: 20px; box-sizing: border-box; text-align: center; color: #000000;
+        }
+        .quiz-card { background: #ffffff; padding: 32px 24px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+        .quiz-card h3 { font-size: 24px; margin: 0 0 16px 0; font-weight: 700; color: #000000;}
+        .quiz-card p { font-size: 16px; color: #4b4b4b; line-height: 1.5; margin-bottom: 24px;}
+        
+        .btn-black { background: #000000; color: #ffffff; border: none; padding: 14px 20px; width: 100%; border-radius: 999px; font-weight: 500; font-size: 16px; cursor: pointer; margin-bottom: 12px; font-family: inherit;}
+        .btn-white { background: #ffffff; color: #000000; border: 1px solid #000000; padding: 14px 20px; width: 100%; border-radius: 999px; font-weight: 500; font-size: 16px; cursor: pointer; font-family: inherit;}
+        .btn-black:active, .btn-white:active { transform: scale(0.98); }
     </style>
   </head>
   <body>
+    <!-- Màn hình khởi động -->
     <div id="start-screen">
-        <h2>🏛️ Sẵn Sàng Quét AR</h2>
-        <p>Trình duyệt yêu cầu bạn chạm vào màn hình để cấp quyền phát video lồng tiếng.</p>
-        <button id="start-btn">Bắt Đầu Trải Nghiệm</button>
+        <h2>🏛️ Kích hoạt không gian AR</h2>
+        <p>Hệ thống cần quyền phát video lồng tiếng.<br>Hãy chú ý lắng nghe, vì một quyết định lịch sử đang chờ bạn ở cuối video!</p>
+        <button id="start-btn">Mở Camera Khám Phá</button>
     </div>
 
-    <!-- Khung chứa 3D giờ đã được ép kích thước -->
+    <!-- Nút bật tắt Lăng kính thời gian -->
+    <button id="filter-btn">👁️ Lăng kính thời gian</button>
+
+    <!-- Màn hình nhập vai lịch sử (Ẩn lúc đầu) -->
+    <div id="quiz-modal">
+        <div class="quiz-card" id="quiz-choices">
+            <h3>Ngã rẽ lịch sử ⚖️</h3>
+            <p>Nếu bạn là Thiên hoàng Minh Trị năm 1868, bạn sẽ xử lý tầng lớp Samurai (võ sĩ đạo) đang nắm nhiều đặc quyền như thế nào?</p>
+            <button class="btn-black" onclick="selectOption(1)">Tước bỏ đặc quyền, xóa bỏ giai cấp</button>
+            <button class="btn-white" onclick="selectOption(2)">Giữ nguyên để họ làm nòng cốt quân đội</button>
+        </div>
+        <div class="quiz-card" id="quiz-result" style="display: none;">
+            <!-- Kết quả sẽ được điền bằng Javascript -->
+        </div>
+    </div>
+
+    <!-- Không gian AR -->
     <div id="scene-container"></div>
 
     <script>
@@ -41,17 +88,36 @@
         
         if(!id || !vid) alert("Lỗi: Không tìm thấy bài học sinh!");
 
+        // 1. Tính năng Lăng Kính Thời Gian
+        const filterBtn = document.getElementById('filter-btn');
+        let isFilterOn = false;
+        filterBtn.addEventListener('click', () => {
+            isFilterOn = !isFilterOn;
+            if(isFilterOn) {
+                document.body.classList.add('time-filter-on');
+                filterBtn.innerText = '✨ Tắt lăng kính';
+                filterBtn.style.background = '#000000';
+                filterBtn.style.color = '#ffffff';
+            } else {
+                document.body.classList.remove('time-filter-on');
+                filterBtn.innerText = '👁️ Lăng kính thời gian';
+                filterBtn.style.background = '#ffffff';
+                filterBtn.style.color = '#000000';
+            }
+        });
+
+        // 2. Kích hoạt AR
         document.getElementById('start-btn').addEventListener('click', () => {
             document.getElementById('start-screen').style.display = 'none';
+            filterBtn.style.display = 'block'; // Hiện nút lăng kính
             
             document.getElementById('scene-container').innerHTML = `
                 <a-scene mindar-image="imageTargetSrc: /data/${id}/targets.mind; autoStart: true;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
                   <a-assets>
-                    <video id="userVideo" src="${vid}" loop crossorigin="anonymous" playsinline webkit-playsinline></video>
+                    <video id="userVideo" src="${vid}" crossorigin="anonymous" playsinline webkit-playsinline></video>
                   </a-assets>
                   <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
                   <a-entity mindar-image-target="targetIndex: 0">
-                    <!-- 2. SỬA LỖI MẤT HÌNH: Dùng a-plane (mặt phẳng) thay vì a-video -->
                     <a-plane material="src: #userVideo" position="0 0 0" height="1" width="1"></a-plane>
                   </a-entity>
                 </a-scene>
@@ -61,15 +127,46 @@
                 const target = document.querySelector('[mindar-image-target]');
                 const videoEl = document.getElementById('userVideo');
                 
-                // Mẹo "Mở khóa" hệ thống video ẩn của trình duyệt di động
+                // Mẹo trình duyệt di động
                 videoEl.play().then(() => { videoEl.pause(); }).catch(e => console.log(e));
 
                 if(target) {
                     target.addEventListener("targetFound", () => videoEl.play());
                     target.addEventListener("targetLost", () => videoEl.pause());
                 }
+
+                // 3. Tính năng Ngã Rẽ Lịch Sử: Chờ video chạy xong
+                videoEl.addEventListener('ended', () => {
+                    document.getElementById('quiz-modal').style.display = 'flex';
+                });
+
             }, 1000);
         });
+
+        // 4. Xử lý kịch bản Trả lời tương tác
+        window.selectOption = function(type) {
+            document.getElementById('quiz-choices').style.display = 'none';
+            const resultBox = document.getElementById('quiz-result');
+            resultBox.style.display = 'block';
+            
+            if(type === 1) {
+                resultBox.innerHTML = `
+                    <h3>Sự thật lịch sử 📜</h3>
+                    <p><b>Quyết định táo bạo!</b> Trong lịch sử, Minh Trị đã phế藩置県 (Phế phiên lập huyện), dũng cảm tước bỏ đặc quyền của Samurai. Dù gây ra vài cuộc nổi loạn, nhưng nó đã giải phóng nguồn lực khổng lồ để Nhật Bản hiện đại hóa thành công.</p>
+                    <button class="btn-black" onclick="closeQuiz()">Tiếp tục khám phá</button>
+                `;
+            } else {
+                resultBox.innerHTML = `
+                    <h3>Góc nhìn giả định 💡</h3>
+                    <p>Nếu duy trì đặc quyền, ngân khố quốc gia sẽ cạn kiệt để trả lương cho Samurai, và hệ thống giáo dục - quân đội phương Tây sẽ không thể áp dụng triệt để. Nhật Bản có thể đã đi theo vết xe đổ bị thực dân xâu xé.</p>
+                    <button class="btn-black" onclick="closeQuiz()">Tiếp tục khám phá</button>
+                `;
+            }
+        }
+
+        window.closeQuiz = function() {
+            document.getElementById('quiz-modal').style.display = 'none';
+        }
     </script>
   </body>
 </html>
