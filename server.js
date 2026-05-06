@@ -16,7 +16,10 @@ cloudinary.config({
 const app = express();
 
 // --- 1. BỨC TƯỜNG LỬA (SECURITY MIDDLEWARES) ---
-app.use(helmet()); // Vá lỗ hổng HTTP
+app.use(helmet({
+    contentSecurityPolicy: false, // Tắt tính năng chặn mã nhúng nội bộ để chạy được MindAR và code Form
+    crossOriginEmbedderPolicy: false // Cần thiết để A-Frame dựng không gian 3D
+}));
 app.use(express.json({ limit: '20mb' })); // Chặn ném văn bản rác quá lớn
 app.use(express.urlencoded({ limit: '20mb', extended: true }));
 
