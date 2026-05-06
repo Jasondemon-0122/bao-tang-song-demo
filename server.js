@@ -27,7 +27,8 @@ app.use(express.urlencoded({ limit: '20mb', extended: true }));
 const upload = multer({ 
     dest: 'temp/',
     limits: { 
-        fileSize: 15 * 1024 * 1024 // Giới hạn cứng tối đa 15MB cho mỗi file
+        // Đổi số 15 thành 30 (nghĩa là 30MB), hoặc 50 (50MB)
+        fileSize: 30 * 1024 * 1024 
     },
     fileFilter: (req, file, cb) => {
         // Chỉ cho phép Video MP4 và Ảnh gốc, chặn file hack (.exe, .php, v.v)
