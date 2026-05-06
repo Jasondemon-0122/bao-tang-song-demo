@@ -18,7 +18,7 @@ app.use('/mindar', express.static(path.join(__dirname, 'node_modules/mind-ar/dis
 app.use(express.static('public'));
 app.use('/data', express.static('data'));
 
-// API Nhận bài nộp (Đã nâng cấp)
+// API Nhận bài nộp (Đã nâng cấp để nhận nội dung Điểm chạm)
 app.post('/api/nop-bai', upload.fields([{ name: 'image' }, { name: 'video' }, { name: 'mind' }]), async (req, res) => {
     try {
         let tenNhom = req.body.tenNhom.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]/g, '_');
@@ -34,8 +34,15 @@ app.post('/api/nop-bai', upload.fields([{ name: 'image' }, { name: 'video' }, { 
         // 2. Giữ file nhận diện AR .mind lại máy chủ
         fs.renameSync(req.files['mind'][0].path, path.join(dirPath, 'targets.mind'));
 
-        // 3. Lưu địa chỉ (link) của ảnh/video thành 1 file text siêu nhẹ
-        const links = { image: imgUpload.secure_url, video: vidUpload.secure_url };
+        // 3. Lưu địa chỉ (link) và TOÀN BỘ TEXT ĐIỂM CHẠM vào file JSON
+        const links = { 
+            image: imgUpload.secure_url, 
+            video: vidUpload.secure_url,
+            hs1Title: req.body.hs1Title || "Góc Giải Nghĩa 📚",
+            hs1Content: req.body.hs1Content || "Chưa có thông tin",
+            hs2Title: req.body.hs2Title || "Bí mật Lịch sử 🔍",
+            hs2Content: req.body.hs2Content || "Chưa có thông tin"
+        };
         fs.writeFileSync(path.join(dirPath, 'links.json'), JSON.stringify(links));
 
         // 4. Xóa rác, giải phóng bộ nhớ cho máy chủ
@@ -61,13 +68,13 @@ app.get('/api/danh-sach', (req, res) => {
         const linkFile = path.join(dataPath, dir, 'links.json');
         if(fs.existsSync(linkFile)) {
             const links = JSON.parse(fs.readFileSync(linkFile));
-            students.push({ name: dir, image: links.image, video: links.video });
+            students.push({ name: dir, image: links.image }); // Không cần gửi video ở đây nữa vì ar-view sẽ tự lấy
         }
     });
     res.json(students);
 });
 
-// Cho phép Render tự động chọn cổng (PORT), nếu chạy ở máy tính thì dùng cổng 3000
+// Cho phép Render tự động chọn cổng (PORT)
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
