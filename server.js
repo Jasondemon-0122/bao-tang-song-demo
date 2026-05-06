@@ -125,7 +125,23 @@ app.get('/api/danh-sach', (req, res) => {
     });
     res.json(students);
 });
+// --- LƯỚI HỨNG LỖI HỆ THỐNG (BẮT BUỘC ĐỂ TRÁNH TRẢ VỀ HTML) ---
+app.use((err, req, res, next) => {
+    console.error("Lỗi hệ thống Middleware:", err);
+    // Nếu Multer báo lỗi file quá nặng
+    if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ success: false, message: 'Lỗi: Có file vượt quá mức trần 15MB!' });
+    }
+    // Các lỗi khác
+    res.status(500).json({ success: false, message: err.message || "Lỗi máy chủ nội bộ. Vui lòng thử lại!" });
+});
 
+// Chạy máy chủ
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`✅ Server Bảo Mật đang chạy tại cổng ${PORT}`);
+    console.log('☁️ Đã nạp chìa khóa Cloudinary từ biến môi trường!');
+});
 // Chạy máy chủ
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
