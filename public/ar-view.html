@@ -130,20 +130,22 @@
                 const safeHs2Title = encodeURIComponent(studentData.hs2Title);
                 const safeHs2Content = encodeURIComponent(studentData.hs2Content);
 
-                // KIỂM TRA LINH HOẠT VÀ TẠO MÃ HTML ĐỘNG
-                let videoAssetHTML = "";
-                let videoRenderHTML = "";
+                // --- HỆ THỐNG PHÂN LOẠI TÀI NGUYÊN (ASSET MANAGER) CỦA A-FRAME ---
+                let assetHTML = "";
+                let renderHTML = "";
                 
                 if (studentData.video) {
-                    videoAssetHTML = `<video id="userVideo" src="${studentData.video}" crossorigin="anonymous" playsinline webkit-playsinline loop></video>`;
-                    videoRenderHTML = `<a-plane material="src: #userVideo" position="0 0 0" height="1" width="1"></a-plane>`;
+                    assetHTML += `<video id="userVideo" src="${studentData.video}" crossorigin="anonymous" playsinline webkit-playsinline loop></video>`;
+                    renderHTML += `<a-plane material="src: #userVideo" position="0 0 0" height="1" width="1"></a-plane>`;
                 }
 
-                let modelHTML = "";
                 if (studentData.model) {
-                    // CẢI TIẾN TRỌNG TÂM: Nếu không có video, mô hình nhảy vào chính giữa (Y=0)
+                    // Cải tiến: Đưa link 3D vào khu vực "Phòng chờ" <a-asset-item>
+                    assetHTML += `<a-asset-item id="userModel" src="${studentData.model}" crossorigin="anonymous" response-type="arraybuffer"></a-asset-item>`;
+                    
                     let positionY = studentData.video ? "-0.7" : "0"; 
-                    modelHTML = `<a-gltf-model src="${studentData.model}" position="0 ${positionY} 0.1" scale="0.5 0.5 0.5" class="clickable" drag-rotate-model crossorigin="anonymous"></a-gltf-model>`;
+                    // Gọi ID của mô hình ra để render
+                    renderHTML += `<a-entity gltf-model="#userModel" position="0 ${positionY} 0.1" scale="0.5 0.5 0.5" class="clickable" drag-rotate-model></a-entity>`;
                 }
 
                 document.getElementById('scene-container').innerHTML = `
@@ -153,15 +155,14 @@
                              cursor="rayOrigin: mouse; fuse: false" raycaster="objects: .clickable; far: 10000;">
                       
                       <a-assets>
-                        ${videoAssetHTML}
+                        ${assetHTML}
                       </a-assets>
                       
                       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
                       
                       <a-entity mindar-image-target="targetIndex: 0">
-                        ${videoRenderHTML}
-
-                        ${modelHTML}
+                        
+                        ${renderHTML}
 
                         <a-entity class="clickable" position="-0.7 0 0.05" geometry="primitive: circle; radius: 0.3" material="color: #ffffff; opacity: 0.01; transparent: true" hotspot-action="title: ${safeHs1Title}; content: ${safeHs1Content}; side: left">
                             <a-circle radius="0.12" color="#ffffff" opacity="0.9" animation="property: scale; to: 1.15 1.15 1.15; dir: alternate; dur: 800; loop: true"><a-text value="+" align="center" position="0 0 0.01" color="#000000" scale="0.8 0.8 0.8" font="kelsonsans"></a-text></a-circle>
@@ -178,7 +179,6 @@
                     const target = document.querySelector('[mindar-image-target]');
                     const videoEl = document.getElementById('userVideo');
                     
-                    // SỬA LỖI: Chỉ gọi lệnh play/pause nếu có Video
                     if (videoEl) {
                         videoEl.play().then(() => { videoEl.pause(); }).catch(e => console.log(e));
                         if(target) {
