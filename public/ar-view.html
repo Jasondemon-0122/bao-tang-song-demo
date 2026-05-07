@@ -54,7 +54,7 @@
 
     <div id="scale-container">
         <label>🔍 Thu/Phóng</label>
-        <input type="range" id="scale-slider" min="0.01" max="15.0" step="0.01" value="0.5">
+        <input type="range" id="scale-slider" min="0.001" max="5.0" step="0.001" value="0.05">
     </div>
 
     <div class="side-panel" id="panel-left">
@@ -159,11 +159,11 @@
 
                 if (studentData.model) {
                     document.getElementById('scale-container').style.display = 'flex';
-                    // BỎ response-type="arraybuffer" ĐỂ TRÁNH LỖI PHIÊN BẢN
                     assetHTML += `<a-asset-item id="userModel" src="${studentData.model}" crossorigin="anonymous"></a-asset-item>`;
                     let positionY = studentData.video ? "-0.7" : "0"; 
                     
-                    renderHTML += `<a-entity id="ar-model" gltf-model="#userModel" position="0 ${positionY} 0.1" scale="0.5 0.5 0.5" class="clickable" drag-rotate-model></a-entity>`;
+                    // THU NHỎ MẶC ĐỊNH MÔ HÌNH VỀ 0.05
+                    renderHTML += `<a-entity id="ar-model" gltf-model="#userModel" position="0 ${positionY} 0.1" scale="0.05 0.05 0.05" class="clickable" drag-rotate-model></a-entity>`;
                 }
 
                 document.getElementById('scene-container').innerHTML = `
@@ -201,13 +201,11 @@
                     const arModel = document.getElementById('ar-model');
                     
                     if (scaleSlider && arModel) {
-                        // Kéo thanh trượt đổi size ngay lập tức
                         scaleSlider.addEventListener('input', (e) => {
                             const val = parseFloat(e.target.value);
                             arModel.setAttribute('scale', `${val} ${val} ${val}`);
                         });
 
-                        // RADAR BÁO LỖI 3D: Giúp bạn biết mô hình có hỏng hay không
                         arModel.addEventListener('model-error', () => {
                             alert("❌ Cảnh báo: File 3D (.glb) bị lỗi cấu trúc từ nguồn tải, không thể hiển thị!");
                         });
@@ -216,7 +214,6 @@
                     const target = document.querySelector('[mindar-image-target]');
                     const videoEl = document.getElementById('userVideo');
                     
-                    // PHẦN ĐƯỢC VÁ LẠI CHUẨN XÁC
                     if (videoEl) {
                         videoEl.play().then(() => { videoEl.pause(); }).catch(e => console.log(e));
                         if(target) {
