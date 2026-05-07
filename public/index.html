@@ -41,24 +41,24 @@
                 <p class="subtitle">Chuẩn bị các nguyên liệu cho AR.</p>
 
                 <div class="input-group">
-                    <label>Tên nhóm của bạn</label>
+                    <label>Tên nhóm của bạn (*)</label>
                     <input type="text" id="tenNhom" name="tenNhom" placeholder="VD: Nhóm 1" required>
                 </div>
                 
                 <div class="input-group">
-                    <label>🖼️ Ảnh chân dung / Poster (.jpg/.png)</label>
+                    <label>🖼️ Ảnh chân dung / Poster (*)</label>
                     <input type="file" id="imageInput" name="image" accept="image/*" required>
                 </div>
                 
                 <div class="input-group">
-                    <label>🎬 Video thuyết minh (Tối đa 30MB)</label>
-                    <input type="file" id="videoInput" name="video" accept="video/mp4" required>
+                    <label>🎬 Video thuyết minh (Tùy chọn)</label>
+                    <input type="file" id="videoInput" name="video" accept="video/mp4">
                 </div>
 
                 <div class="input-group">
                     <label>🧊 Mô hình 3D (Tùy chọn, .glb / .gltf)</label>
-                    <span class="sub-label">Nếu có mô hình 3D, hãy tải lên đây. Học sinh có thể xoay 360 độ khi xem AR.</span>
-                    <input type="file" name="model" accept=".glb,.gltf">
+                    <span class="sub-label">Hãy nộp ít nhất 1 Video HOẶC 1 Mô hình 3D (hoặc cả hai).</span>
+                    <input type="file" id="modelInput" name="model" accept=".glb,.gltf">
                 </div>
 
                 <button type="button" class="btn-primary" onclick="goToTab2()">Tiếp tục: Cài đặt Điểm chạm →</button>
@@ -101,13 +101,22 @@
     <script type="module">
         import { Compiler } from 'https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js';
 
-        // Xử lý chuyển Tab qua lại
         window.goToTab2 = () => {
-            // Validate cơ bản trước khi sang tab 2
-            if(!document.getElementById('tenNhom').value || !document.getElementById('imageInput').files.length || !document.getElementById('videoInput').files.length) {
-                alert("Vui lòng điền đủ Tên nhóm, tải Ảnh và Video trước khi tiếp tục!");
+            const tenNhom = document.getElementById('tenNhom').value;
+            const hasImage = document.getElementById('imageInput').files.length > 0;
+            const hasVideo = document.getElementById('videoInput').files.length > 0;
+            const hasModel = document.getElementById('modelInput').files.length > 0;
+
+            if(!tenNhom || !hasImage) {
+                alert("Vui lòng điền đủ Tên nhóm và nộp Ảnh chân dung!");
                 return;
             }
+            // KIỂM TRA ĐIỀU KIỆN TÙY CHỌN: Phải có Video HOẶC Mô hình
+            if(!hasVideo && !hasModel) {
+                alert("Bạn phải nộp ít nhất 1 Video HOẶC 1 Mô hình 3D để quét AR nhé!");
+                return;
+            }
+
             document.getElementById('tab1').classList.remove('active');
             document.getElementById('tab2').classList.add('active');
         }
@@ -147,16 +156,14 @@
                 const mindBlob = new Blob([exportedData], { type: 'application/octet-stream' });
                 formData.append('mind', mindBlob, 'targets.mind');
 
-                statusText.innerText = "Đang đóng gói và đẩy lên đám mây (Có thể mất 1-2 phút nếu có mô hình 3D)...";
+                statusText.innerText = "Đang đóng gói và đẩy lên đám mây (Xin chờ 1 chút)...";
                 const res = await fetch('/api/nop-bai', { method: 'POST', body: formData });
                 const result = await res.json();
                 
                 if(result.success) {
                     statusText.style.color = '#28a745';
                     statusText.innerText = "Hoàn tất xuất sắc! Chuyển hướng sang Triển lãm...";
-                    setTimeout(() => {
-                        window.location.href = "/trien-lam.html";
-                    }, 1500); // Tự động sang phòng triển lãm sau 1.5s
+                    setTimeout(() => { window.location.href = "/trien-lam.html"; }, 1500); 
                 } else {
                     throw new Error(result.message);
                 }
