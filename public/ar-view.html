@@ -54,7 +54,7 @@
 
     <div id="scale-container">
         <label>🔍 Thu/Phóng</label>
-        <input type="range" id="scale-slider" min="0.001" max="5.0" step="0.001" value="0.05">
+        <input type="range" id="scale-slider" min="0.0001" max="1.5" step="0.0001" value="0.005">
     </div>
 
     <div class="side-panel" id="panel-left">
@@ -162,8 +162,8 @@
                     assetHTML += `<a-asset-item id="userModel" src="${studentData.model}" crossorigin="anonymous"></a-asset-item>`;
                     let positionY = studentData.video ? "-0.7" : "0"; 
                     
-                    // THU NHỎ MẶC ĐỊNH MÔ HÌNH VỀ 0.05
-                    renderHTML += `<a-entity id="ar-model" gltf-model="#userModel" position="0 ${positionY} 0.1" scale="0.05 0.05 0.05" class="clickable" drag-rotate-model></a-entity>`;
+                    // THU NHỎ MẶC ĐỊNH MÔ HÌNH VỀ 0.005 ĐỂ TRỊ MÔ HÌNH LỖI SIZE
+                    renderHTML += `<a-entity id="ar-model" gltf-model="#userModel" position="0 ${positionY} 0.1" scale="0.005 0.005 0.005" class="clickable" drag-rotate-model></a-entity>`;
                 }
 
                 document.getElementById('scene-container').innerHTML = `
@@ -195,7 +195,6 @@
                     </a-scene>
                 `;
 
-                // XỬ LÝ SỰ KIỆN SAU KHI DỰNG SCENE
                 setTimeout(() => {
                     const scaleSlider = document.getElementById('scale-slider');
                     const arModel = document.getElementById('ar-model');
