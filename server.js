@@ -30,8 +30,9 @@ const upload = multer({
         }
         if (file.fieldname === 'model') {
             const ext = path.extname(file.originalname).toLowerCase();
-            if (ext !== '.glb' && ext !== '.gltf') {
-                return cb(new Error('Chỉ chấp nhận mô hình 3D định dạng .glb hoặc .gltf'));
+            // CHỈ CHẤP NHẬN .glb
+            if (ext !== '.glb') {
+                return cb(new Error('Chỉ chấp nhận mô hình 3D định dạng .glb (Khuyến khích để tối ưu dung lượng)'));
             }
         }
         cb(null, true); 
@@ -57,12 +58,10 @@ app.post('/api/nop-bai', upload.fields([{ name: 'image' }, { name: 'video' }, { 
         const dirPath = path.join(__dirname, 'data', tenNhom);
         if (!fs.existsSync(dirPath)) fs.mkdirSync(dirPath, { recursive: true });
 
-        // 1. LUÔN LUÔN CÓ ẢNH VÀ FILE MIND
         const imgUpload = await cloudinary.uploader.upload(req.files['image'][0].path, { folder: "bao-tang-song" });
         fs.renameSync(req.files['mind'][0].path, path.join(dirPath, 'targets.mind'));
         fs.unlinkSync(req.files['image'][0].path);
 
-        // 2. VIDEO (NẾU CÓ THÌ MỚI UP)
         let vidUrl = "";
         if (req.files['video'] && req.files['video'][0]) {
             const vidUpload = await cloudinary.uploader.upload(req.files['video'][0].path, { folder: "bao-tang-song", resource_type: "video" });
@@ -70,27 +69,23 @@ app.post('/api/nop-bai', upload.fields([{ name: 'image' }, { name: 'video' }, { 
             fs.unlinkSync(req.files['video'][0].path);
         }
 
-        // 3. MÔ HÌNH 3D (GIẢI QUYẾT LỖI N/A: ÉP GẮN ĐUÔI .glb)
         let modelUrl = "";
         if (req.files['model'] && req.files['model'][0]) {
             const modelFile = req.files['model'][0];
-            // Lấy đuôi từ file gốc, nếu mất thì tự động gán .glb
-            let ext = path.extname(modelFile.originalname).toLowerCase(); 
-            if (ext !== '.glb' && ext !== '.gltf') ext = '.glb';
-            
+            const ext = '.glb'; // Ép cứng luôn đuôi .glb
             const newPath = modelFile.path + ext; 
-            fs.renameSync(modelFile.path, newPath); // Gắn đuôi vào file nháp
             
-            // Upload lên Cloudinary dạng Raw
+            fs.renameSync(modelFile.path, newPath); 
+            
             const modelUpload = await cloudinary.uploader.upload(newPath, { folder: "bao-tang-song", resource_type: "raw" });
             modelUrl = modelUpload.secure_url;
-            fs.unlinkSync(newPath); // Xóa file nháp
+            fs.unlinkSync(newPath); 
         }
 
         const links = { 
             image: imgUpload.secure_url, 
-            video: vidUrl, // Có thể rỗng
-            model: modelUrl, // Có thể rỗng
+            video: vidUrl, 
+            model: modelUrl, 
             hs1Title: sanitizeText(req.body.hs1Title) || "Góc Giải Nghĩa",
             hs1Content: sanitizeText(req.body.hs1Content) || "Chưa có thông tin",
             hs2Title: sanitizeText(req.body.hs2Title) || "Bí mật Lịch sử",

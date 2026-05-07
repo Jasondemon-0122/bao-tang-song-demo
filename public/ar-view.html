@@ -29,13 +29,32 @@
         .side-panel .content-box { font-size: 13px; color: #333333; line-height: 1.5; max-height: 40vh; overflow-y: auto; }
         .close-btn { position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 18px; color: #888; cursor: pointer; padding: 0; line-height: 1;}
         .close-btn:active { color: #000; }
+
+        /* THANH ĐIỀU CHỈNH KÍCH THƯỚC (SCALE) */
+        #scale-container {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            width: 80%; max-width: 320px;
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(5px);
+            padding: 14px 20px; border-radius: 999px;
+            display: none; /* Chỉ hiện khi có mô hình */
+            align-items: center; justify-content: space-between; z-index: 9999;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+            box-sizing: border-box;
+        }
+        #scale-container label { font-size: 14px; font-weight: 700; color: #000; display: flex; align-items: center; gap: 8px;}
+        #scale-slider { flex-grow: 1; margin-left: 16px; accent-color: #000; cursor: pointer; }
     </style>
   </head>
   <body>
     <div id="start-screen">
         <h2>🏛️ Kích hoạt không gian AR</h2>
-        <p>Hướng camera vào ảnh chân dung.<br>Nếu có mô hình 3D, bạn có thể <b>dùng ngón tay vuốt để xoay</b>!</p>
+        <p>Hướng camera vào ảnh chân dung.<br>Vuốt ngón tay để xoay, kéo thanh bên dưới để phóng to 3D!</p>
         <button id="start-btn">Mở Camera Khám Phá</button>
+    </div>
+
+    <div id="scale-container">
+        <label>🔍 Thu/Phóng</label>
+        <input type="range" id="scale-slider" min="0.1" max="3.0" step="0.1" value="0.5">
     </div>
 
     <div class="side-panel" id="panel-left">
@@ -130,7 +149,6 @@
                 const safeHs2Title = encodeURIComponent(studentData.hs2Title);
                 const safeHs2Content = encodeURIComponent(studentData.hs2Content);
 
-                // --- HỆ THỐNG PHÂN LOẠI TÀI NGUYÊN (ASSET MANAGER) CỦA A-FRAME ---
                 let assetHTML = "";
                 let renderHTML = "";
                 
@@ -140,12 +158,14 @@
                 }
 
                 if (studentData.model) {
-                    // Cải tiến: Đưa link 3D vào khu vực "Phòng chờ" <a-asset-item>
+                    // Bật hiển thị thanh trượt khi phát hiện có mô hình 3D
+                    document.getElementById('scale-container').style.display = 'flex';
+
                     assetHTML += `<a-asset-item id="userModel" src="${studentData.model}" crossorigin="anonymous" response-type="arraybuffer"></a-asset-item>`;
-                    
                     let positionY = studentData.video ? "-0.7" : "0"; 
-                    // Gọi ID của mô hình ra để render
-                    renderHTML += `<a-entity gltf-model="#userModel" position="0 ${positionY} 0.1" scale="0.5 0.5 0.5" class="clickable" drag-rotate-model></a-entity>`;
+                    
+                    // Gắn id="ar-model" để thanh kéo gọi tới
+                    renderHTML += `<a-entity id="ar-model" gltf-model="#userModel" position="0 ${positionY} 0.1" scale="0.5 0.5 0.5" class="clickable" drag-rotate-model></a-entity>`;
                 }
 
                 document.getElementById('scene-container').innerHTML = `
@@ -161,7 +181,6 @@
                       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
                       
                       <a-entity mindar-image-target="targetIndex: 0">
-                        
                         ${renderHTML}
 
                         <a-entity class="clickable" position="-0.7 0 0.05" geometry="primitive: circle; radius: 0.3" material="color: #ffffff; opacity: 0.01; transparent: true" hotspot-action="title: ${safeHs1Title}; content: ${safeHs1Content}; side: left">
@@ -175,10 +194,22 @@
                     </a-scene>
                 `;
 
+                // BẮT SỰ KIỆN KÉO THANH TRƯỢT -> ĐỔI SIZE 3D THỰC TẾ
                 setTimeout(() => {
+                    const scaleSlider = document.getElementById('scale-slider');
+                    const arModel = document.getElementById('ar-model');
+                    
+                    if (scaleSlider && arModel) {
+                        scaleSlider.addEventListener('input', (e) => {
+                            const val = parseFloat(e.target.value);
+                            // Set kích thước X, Y, Z bằng với giá trị kéo của thanh
+                            arModel.setAttribute('scale', `${val} ${val} ${val}`);
+                        });
+                    }
+
+                    // Phát video nếu có
                     const target = document.querySelector('[mindar-image-target]');
                     const videoEl = document.getElementById('userVideo');
-                    
                     if (videoEl) {
                         videoEl.play().then(() => { videoEl.pause(); }).catch(e => console.log(e));
                         if(target) {

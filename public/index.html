@@ -25,7 +25,6 @@
         #status { color: #28a745; font-weight: 500; display: none; margin-top: 16px; font-size: 14px; text-align: center;}
         .hotspot-box { background: #fafafa; padding: 16px; border-radius: 8px; border: 1px dashed #afafaf; margin-bottom: 16px;}
         
-        /* Hiệu ứng chuyển Tab */
         .tab-content { display: none; animation: fadeIn 0.4s ease; }
         .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
@@ -56,9 +55,9 @@
                 </div>
 
                 <div class="input-group">
-                    <label>🧊 Mô hình 3D (Tùy chọn, .glb / .gltf)</label>
-                    <span class="sub-label">Hãy nộp ít nhất 1 Video HOẶC 1 Mô hình 3D (hoặc cả hai).</span>
-                    <input type="file" id="modelInput" name="model" accept=".glb,.gltf">
+                    <label>🧊 Mô hình 3D (Tùy chọn, KHUYẾN KHÍCH .glb)</label>
+                    <span class="sub-label">Chỉ nhận định dạng .glb đã đóng gói. Học sinh có thể phóng to, thu nhỏ và xoay 360 độ khi xem AR.</span>
+                    <input type="file" id="modelInput" name="model" accept=".glb">
                 </div>
 
                 <button type="button" class="btn-primary" onclick="goToTab2()">Tiếp tục: Cài đặt Điểm chạm →</button>
@@ -111,9 +110,8 @@
                 alert("Vui lòng điền đủ Tên nhóm và nộp Ảnh chân dung!");
                 return;
             }
-            // KIỂM TRA ĐIỀU KIỆN TÙY CHỌN: Phải có Video HOẶC Mô hình
             if(!hasVideo && !hasModel) {
-                alert("Bạn phải nộp ít nhất 1 Video HOẶC 1 Mô hình 3D để quét AR nhé!");
+                alert("Bạn phải nộp ít nhất 1 Video HOẶC 1 Mô hình 3D (.glb) để quét AR nhé!");
                 return;
             }
 
@@ -132,7 +130,7 @@
             const statusText = document.getElementById('status');
             
             submitBtn.style.display = 'none';
-            document.querySelector('.btn-secondary').style.display = 'none'; // Ẩn luôn nút quay lại khi đang up
+            document.querySelector('.btn-secondary').style.display = 'none'; 
             statusText.style.display = 'block';
             statusText.style.color = '#e74c3c';
             statusText.innerText = "Đang nạp ảnh vào hệ thống...";
