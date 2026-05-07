@@ -8,63 +8,89 @@
     
     <style>
         body { background-color: var(--uber-white); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 40px 20px;}
-        .container { padding: 40px 32px; border-radius: 12px; box-shadow: var(--shadow-light); width: 100%; max-width: 460px; }
+        .container { padding: 40px 32px; border-radius: 12px; box-shadow: var(--shadow-light); width: 100%; max-width: 460px; position: relative; overflow: hidden;}
         p.subtitle { color: var(--text-gray); font-size: 16px; margin: 0 0 32px 0; }
         .input-group { margin-bottom: 24px; text-align: left; }
         .input-group label { display: block; font-size: 14px; font-weight: 700; margin-bottom: 8px; color: var(--uber-black);}
         .sub-label { display: block; font-size: 12px; font-weight: 400; color: var(--text-gray); margin-bottom: 8px;}
-        input[type="text"], select, input[type="file"] { width: 100%; padding: 14px 16px; box-sizing: border-box;}
-        textarea { width: 100%; padding: 14px 16px; box-sizing: border-box; border: 1px solid var(--uber-black); border-radius: 8px; font-family: 'Inter', sans-serif; resize: vertical; min-height: 80px;}
-        .btn-primary { padding: 16px 24px; width: 100%; margin-top: 10px; }
+        input[type="text"], select, input[type="file"] { width: 100%; padding: 14px 16px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 8px;}
+        textarea { width: 100%; padding: 14px 16px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 8px; font-family: 'Inter', sans-serif; resize: vertical; min-height: 80px;}
+        
+        .btn-primary { background: #000; color: #fff; border: none; padding: 16px 24px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 16px; transition: 0.2s;}
+        .btn-secondary { background: #f1f1f1; color: #000; border: none; padding: 16px 24px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 16px; transition: 0.2s;}
+        .btn-primary:active, .btn-secondary:active { transform: scale(0.98); }
+        
         .nav-link { display: inline-block; margin-top: 24px; color: var(--uber-black); text-decoration: none; font-weight: 500; font-size: 16px; background: var(--gray-chip); padding: 12px 24px; border-radius: 999px; transition: 0.2s; }
         .nav-link:hover { background: var(--gray-hover); }
         #status { color: #28a745; font-weight: 500; display: none; margin-top: 16px; font-size: 14px; text-align: center;}
-        
         .hotspot-box { background: #fafafa; padding: 16px; border-radius: 8px; border: 1px dashed #afafaf; margin-bottom: 16px;}
+        
+        /* Hiệu ứng chuyển Tab */
+        .tab-content { display: none; animation: fadeIn 0.4s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+        .step-indicator { font-size: 12px; font-weight: bold; color: #888; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px;}
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>🏛️ Gửi Tác Phẩm</h2>
-        <p class="subtitle">Khởi tạo không gian AR của bạn.</p>
-
         <form id="uploadForm">
-            <div class="input-group">
-                <label>Tên nhóm của bạn</label>
-                <input type="text" name="tenNhom" placeholder="VD: Nhóm 1" required>
-            </div>
-            
-            <div class="input-group">
-                <label>🖼️ Ảnh chân dung (.jpg/.png)</label>
-                <input type="file" name="image" id="imageInput" accept="image/*" required>
-            </div>
-            
-            <div class="input-group">
-                <label>🎬 Video thuyết minh (Tối đa 15MB)</label>
-                <input type="file" name="video" accept="video/mp4" required>
-            </div>
+            <div id="tab1" class="tab-content active">
+                <div class="step-indicator">Bước 1/2</div>
+                <h2>Tải lên dữ liệu mộc</h2>
+                <p class="subtitle">Chuẩn bị các nguyên liệu cho AR.</p>
 
-            <!-- Khu vực nhập nội dung Điểm chạm -->
-            <div class="input-group">
-                <label>📍 Điểm chạm 1 (Xuất hiện bên trái AR)</label>
-                <span class="sub-label">Giải thích một từ khóa khó hoặc sự kiện phụ.</span>
-                <div class="hotspot-box">
-                    <input type="text" name="hs1Title" placeholder="Tiêu đề (VD: Góc Giải Nghĩa 📚)" style="margin-bottom: 8px;" required>
-                    <textarea name="hs1Content" placeholder="Nội dung chi tiết (VD: Samurai là gì...)" required></textarea>
+                <div class="input-group">
+                    <label>Tên nhóm của bạn</label>
+                    <input type="text" id="tenNhom" name="tenNhom" placeholder="VD: Nhóm 1" required>
                 </div>
-            </div>
-
-            <div class="input-group">
-                <label>📍 Điểm chạm 2 (Xuất hiện bên phải AR)</label>
-                <span class="sub-label">Đưa ra một câu hỏi hoặc thông tin ẩn.</span>
-                <div class="hotspot-box">
-                    <input type="text" name="hs2Title" placeholder="Tiêu đề (VD: Bí mật Lịch sử 🔍)" style="margin-bottom: 8px;" required>
-                    <textarea name="hs2Content" placeholder="Nội dung chi tiết..." required></textarea>
+                
+                <div class="input-group">
+                    <label>🖼️ Ảnh chân dung / Poster (.jpg/.png)</label>
+                    <input type="file" id="imageInput" name="image" accept="image/*" required>
                 </div>
+                
+                <div class="input-group">
+                    <label>🎬 Video thuyết minh (Tối đa 30MB)</label>
+                    <input type="file" id="videoInput" name="video" accept="video/mp4" required>
+                </div>
+
+                <div class="input-group">
+                    <label>🧊 Mô hình 3D (Tùy chọn, .glb / .gltf)</label>
+                    <span class="sub-label">Nếu có mô hình 3D, hãy tải lên đây. Học sinh có thể xoay 360 độ khi xem AR.</span>
+                    <input type="file" name="model" accept=".glb,.gltf">
+                </div>
+
+                <button type="button" class="btn-primary" onclick="goToTab2()">Tiếp tục: Cài đặt Điểm chạm →</button>
             </div>
 
-            <button type="submit" id="submitBtn" class="btn-primary">Tạo bản sao AR</button>
-            <p id="status">Đang chuẩn bị dữ liệu...</p>
+            <div id="tab2" class="tab-content">
+                <div class="step-indicator">Bước 2/2</div>
+                <h2>Tích hợp Điểm chạm</h2>
+                <p class="subtitle">Tạo nội dung tương tác nổi quanh AR.</p>
+
+                <div class="input-group">
+                    <label>📍 Điểm chạm 1 (Bên trái)</label>
+                    <span class="sub-label">Giải thích một từ khóa khó hoặc sự kiện phụ.</span>
+                    <div class="hotspot-box">
+                        <input type="text" name="hs1Title" placeholder="Tiêu đề (VD: Góc Giải Nghĩa 📚)" style="margin-bottom: 8px;" required>
+                        <textarea name="hs1Content" placeholder="Nội dung chi tiết..." required></textarea>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>📍 Điểm chạm 2 (Bên phải)</label>
+                    <span class="sub-label">Đưa ra một câu hỏi hoặc thông tin ẩn.</span>
+                    <div class="hotspot-box">
+                        <input type="text" name="hs2Title" placeholder="Tiêu đề (VD: Bí mật Lịch sử 🔍)" style="margin-bottom: 8px;" required>
+                        <textarea name="hs2Content" placeholder="Nội dung chi tiết..." required></textarea>
+                    </div>
+                </div>
+
+                <button type="button" class="btn-secondary" onclick="goToTab1()">← Quay lại Bước 1</button>
+                <button type="submit" id="submitBtn" class="btn-primary">Đóng gói & Lên mây 🚀</button>
+                <p id="status">Đang chuẩn bị dữ liệu...</p>
+            </div>
         </form>
         
         <div style="text-align: center;">
@@ -75,12 +101,29 @@
     <script type="module">
         import { Compiler } from 'https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js';
 
+        // Xử lý chuyển Tab qua lại
+        window.goToTab2 = () => {
+            // Validate cơ bản trước khi sang tab 2
+            if(!document.getElementById('tenNhom').value || !document.getElementById('imageInput').files.length || !document.getElementById('videoInput').files.length) {
+                alert("Vui lòng điền đủ Tên nhóm, tải Ảnh và Video trước khi tiếp tục!");
+                return;
+            }
+            document.getElementById('tab1').classList.remove('active');
+            document.getElementById('tab2').classList.add('active');
+        }
+
+        window.goToTab1 = () => {
+            document.getElementById('tab2').classList.remove('active');
+            document.getElementById('tab1').classList.add('active');
+        }
+
         document.getElementById('uploadForm').onsubmit = async (e) => {
             e.preventDefault();
             const submitBtn = document.getElementById('submitBtn');
             const statusText = document.getElementById('status');
             
             submitBtn.style.display = 'none';
+            document.querySelector('.btn-secondary').style.display = 'none'; // Ẩn luôn nút quay lại khi đang up
             statusText.style.display = 'block';
             statusText.style.color = '#e74c3c';
             statusText.innerText = "Đang nạp ảnh vào hệ thống...";
@@ -104,15 +147,16 @@
                 const mindBlob = new Blob([exportedData], { type: 'application/octet-stream' });
                 formData.append('mind', mindBlob, 'targets.mind');
 
-                statusText.innerText = "Đang đóng gói và đẩy lên đám mây...";
+                statusText.innerText = "Đang đóng gói và đẩy lên đám mây (Có thể mất 1-2 phút nếu có mô hình 3D)...";
                 const res = await fetch('/api/nop-bai', { method: 'POST', body: formData });
                 const result = await res.json();
                 
                 if(result.success) {
                     statusText.style.color = '#28a745';
-                    statusText.innerText = "Hoàn tất xuất sắc!";
-                    alert(result.message);
-                    window.location.reload();
+                    statusText.innerText = "Hoàn tất xuất sắc! Chuyển hướng sang Triển lãm...";
+                    setTimeout(() => {
+                        window.location.href = "/trien-lam.html";
+                    }, 1500); // Tự động sang phòng triển lãm sau 1.5s
                 } else {
                     throw new Error(result.message);
                 }
@@ -121,6 +165,7 @@
                 statusText.innerText = "Thất bại!";
                 alert(`Lỗi: ${err.message}.`);
                 submitBtn.style.display = 'block';
+                document.querySelector('.btn-secondary').style.display = 'block';
             }
         };
     </script>

@@ -38,6 +38,13 @@ const upload = multer({
         if (file.fieldname === 'image' && !file.mimetype.startsWith('image/')) {
             return cb(new Error('Sai định dạng! Chỉ được nộp file ảnh.'));
         }
+        // Thêm kiểm duyệt cho mô hình 3D
+        if (file.fieldname === 'model') {
+            const ext = path.extname(file.originalname).toLowerCase();
+            if (ext !== '.glb' && ext !== '.gltf') {
+                return cb(new Error('Chỉ chấp nhận mô hình 3D định dạng .glb hoặc .gltf'));
+            }
+        }
         cb(null, true); // Cho qua nếu hợp lệ
     }
 });
@@ -58,8 +65,8 @@ const sanitizeText = (str) => {
         .replace(/'/g, '&#x27;');
 };
 
-// API Nhận bài nộp (Đã bọc thép)
-app.post('/api/nop-bai', upload.fields([{ name: 'image' }, { name: 'video' }, { name: 'mind' }]), async (req, res) => {
+// API Nhận bài nộp (Đã bọc thép & Thêm model)
+app.post('/api/nop-bai', upload.fields([{ name: 'image' }, { name: 'video' }, { name: 'model' }, { name: 'mind' }]), async (req, res, next) => {
     try {
         // Vệ sinh Tên nhóm (Chống Path Traversal hack đường dẫn thư mục)
         let rawTenNhom = sanitizeText(req.body.tenNhom);
@@ -76,6 +83,15 @@ app.post('/api/nop-bai', upload.fields([{ name: 'image' }, { name: 'video' }, { 
         const imgUpload = await cloudinary.uploader.upload(req.files['image'][0].path, { folder: "bao-tang-song" });
         const vidUpload = await cloudinary.uploader.upload(req.files['video'][0].path, { folder: "bao-tang-song", resource_type: "video" });
 
+        // Xử lý Mô hình 3D (nếu có)
+        let modelUrl = "";
+        if (req.files['model'] && req.files['model'][0]) {
+            // Định dạng raw bắt buộc cho .glb
+            const modelUpload = await cloudinary.uploader.upload(req.files['model'][0].path, { folder: "bao-tang-song", resource_type: "raw" });
+            modelUrl = modelUpload.secure_url;
+            fs.unlinkSync(req.files['model'][0].path);
+        }
+
         // Giữ file nhận diện AR .mind lại
         fs.renameSync(req.files['mind'][0].path, path.join(dirPath, 'targets.mind'));
 
@@ -83,6 +99,7 @@ app.post('/api/nop-bai', upload.fields([{ name: 'image' }, { name: 'video' }, { 
         const links = { 
             image: imgUpload.secure_url, 
             video: vidUpload.secure_url,
+            model: modelUrl, // Lưu link mô hình 3D vào DB
             hs1Title: sanitizeText(req.body.hs1Title) || "Góc Giải Nghĩa",
             hs1Content: sanitizeText(req.body.hs1Content) || "Chưa có thông tin",
             hs2Title: sanitizeText(req.body.hs2Title) || "Bí mật Lịch sử",
@@ -97,15 +114,7 @@ app.post('/api/nop-bai', upload.fields([{ name: 'image' }, { name: 'video' }, { 
         res.json({ success: true, message: 'Dữ liệu đã được kiểm duyệt và lưu trữ an toàn!' });
 
     } catch (error) {
-        console.error("Báo động hệ thống:", error.message);
-        
-        // Nếu file bị khóa bởi Multer do quá 15MB
-        if (error.code === 'LIMIT_FILE_SIZE') {
-            return res.status(400).json({ success: false, message: 'Lỗi: Có file vượt quá mức trần 15MB!' });
-        }
-        
-        // Các lỗi định dạng file hoặc Cloudinary
-        res.status(400).json({ success: false, message: error.message || 'Lỗi từ chối lưu file.' });
+        next(error); // Chuyển lỗi xuống lưới hứng lỗi
     }
 });
 
@@ -126,6 +135,7 @@ app.get('/api/danh-sach', (req, res) => {
     });
     res.json(students);
 });
+
 // --- LƯỚI HỨNG LỖI HỆ THỐNG (BẮT BUỘC ĐỂ TRÁNH TRẢ VỀ HTML) ---
 app.use((err, req, res, next) => {
     console.error("Lỗi hệ thống Middleware:", err);
