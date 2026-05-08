@@ -25,12 +25,22 @@
         #panel-right { right: 50%; margin-right: -10%; }
         #panel-left.show { left: 12px; margin-left: 0; opacity: 1; transform: translateY(-50%) scale(1); pointer-events: auto; }
         #panel-right.show { right: 12px; margin-right: 0; opacity: 1; transform: translateY(-50%) scale(1); pointer-events: auto; }
-        .side-panel h3 { font-size: 16px; margin: 0 0 8px 0; font-weight: 700; line-height: 1.3; padding-right: 20px; color: #000000;}
-        .side-panel .content-box { font-size: 13px; color: #333333; line-height: 1.5; max-height: 40vh; overflow-y: auto; }
+        
+        /* BẢN VÁ CSS TRỊ LỖI NUỐT CHỮ */
+        .side-panel h3 { font-size: 16px; margin: 0 0 8px 0; font-weight: 700; line-height: 1.3; padding-right: 20px; color: #000000; word-break: break-word;}
+        .side-panel .content-box { 
+            font-size: 13px; 
+            color: #333333; 
+            line-height: 1.5; 
+            max-height: 40vh; 
+            overflow-y: auto; 
+            white-space: pre-wrap; /* Hiển thị chính xác phím Enter (xuống dòng) của học sinh */
+            word-break: break-word; /* Ép ngắt dòng khi chữ quá dài, chống tràn màn hình */
+        }
+        
         .close-btn { position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 18px; color: #888; cursor: pointer; padding: 0; line-height: 1;}
         .close-btn:active { color: #000; }
 
-        /* THANH ĐIỀU CHỈNH KÍCH THƯỚC */
         #scale-container {
             position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
             width: 85%; max-width: 350px;
@@ -110,18 +120,27 @@
           }
         });
 
+        // BẢN VÁ LOGIC ĐIỂM CHẠM: Bỏ qua A-Frame, truy xuất trực tiếp từ Dataset
         AFRAME.registerComponent('hotspot-action', {
-            schema: {
-                title: {type: 'string', default: 'Thông tin'},
-                content: {type: 'string', default: 'Nội dung...'},
-                side: {type: 'string', default: 'left'} 
-            },
+            schema: { side: {type: 'string', default: 'left'} },
             init: function () {
                 const triggerInfo = (e) => {
                     if(e) e.preventDefault(); 
                     const side = this.data.side; 
-                    document.getElementById('title-' + side).innerText = decodeURIComponent(this.data.title);
-                    document.getElementById('content-' + side).innerText = decodeURIComponent(this.data.content);
+                    
+                    // Cơ chế xử lý an toàn các ký tự đặc biệt (như ngoặc kép, dấu nháy)
+                    const decodeHTML = (html) => {
+                        const txt = document.createElement("textarea");
+                        txt.innerHTML = html;
+                        return txt.value;
+                    };
+
+                    // Lấy dữ liệu an toàn 100% không lo bị cắt xén
+                    const rawTitle = decodeURIComponent(this.el.getAttribute('data-title') || "Chưa có tiêu đề");
+                    const rawContent = decodeURIComponent(this.el.getAttribute('data-content') || "Chưa có nội dung");
+
+                    document.getElementById('title-' + side).innerText = decodeHTML(rawTitle);
+                    document.getElementById('content-' + side).innerText = decodeHTML(rawContent);
                     document.getElementById('panel-' + side).classList.add('show');
                 };
                 this.el.addEventListener('click', triggerInfo);
@@ -161,8 +180,6 @@
                     document.getElementById('scale-container').style.display = 'flex';
                     assetHTML += `<a-asset-item id="userModel" src="${studentData.model}" crossorigin="anonymous"></a-asset-item>`;
                     let positionY = studentData.video ? "-0.7" : "0"; 
-                    
-                    // THU NHỎ MẶC ĐỊNH MÔ HÌNH VỀ 0.005 ĐỂ TRỊ MÔ HÌNH LỖI SIZE
                     renderHTML += `<a-entity id="ar-model" gltf-model="#userModel" position="0 ${positionY} 0.1" scale="0.005 0.005 0.005" class="clickable" drag-rotate-model></a-entity>`;
                 }
 
@@ -184,10 +201,13 @@
                       <a-entity mindar-image-target="targetIndex: 0">
                         ${renderHTML}
 
-                        <a-entity class="clickable" position="-0.7 0 0.05" geometry="primitive: circle; radius: 0.3" material="color: #ffffff; opacity: 0.01; transparent: true" hotspot-action="title: ${safeHs1Title}; content: ${safeHs1Content}; side: left">
+                        <a-entity class="clickable" position="-0.7 0 0.05" geometry="primitive: circle; radius: 0.3" material="color: #ffffff; opacity: 0.01; transparent: true" 
+                                  data-title="${safeHs1Title}" data-content="${safeHs1Content}" hotspot-action="side: left">
                             <a-circle radius="0.12" color="#ffffff" opacity="0.9" animation="property: scale; to: 1.15 1.15 1.15; dir: alternate; dur: 800; loop: true"><a-text value="+" align="center" position="0 0 0.01" color="#000000" scale="0.8 0.8 0.8" font="kelsonsans"></a-text></a-circle>
                         </a-entity>
-                        <a-entity class="clickable" position="0.7 0 0.05" geometry="primitive: circle; radius: 0.3" material="color: #ffffff; opacity: 0.01; transparent: true" hotspot-action="title: ${safeHs2Title}; content: ${safeHs2Content}; side: right">
+                        
+                        <a-entity class="clickable" position="0.7 0 0.05" geometry="primitive: circle; radius: 0.3" material="color: #ffffff; opacity: 0.01; transparent: true" 
+                                  data-title="${safeHs2Title}" data-content="${safeHs2Content}" hotspot-action="side: right">
                             <a-circle radius="0.12" color="#ffffff" opacity="0.9" animation="property: scale; to: 1.15 1.15 1.15; dir: alternate; dur: 800; loop: true"><a-text value="+" align="center" position="0 0 0.01" color="#000000" scale="0.8 0.8 0.8" font="kelsonsans"></a-text></a-circle>
                         </a-entity>
                         
