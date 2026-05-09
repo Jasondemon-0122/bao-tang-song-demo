@@ -7,21 +7,21 @@
     <link rel="stylesheet" href="/style.css">
     
     <style>
-        body { background-color: var(--uber-white); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 40px 20px;}
-        .container { padding: 40px 32px; border-radius: 12px; box-shadow: var(--shadow-light); width: 100%; max-width: 460px; position: relative; overflow: hidden; background: #fff;}
-        p.subtitle { color: var(--text-gray); font-size: 16px; margin: 0 0 32px 0; }
+        body { background-color: var(--uber-white); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 40px 20px; margin: 0; font-family: 'Inter', sans-serif;}
+        .container { padding: 40px 32px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.05); width: 100%; max-width: 460px; background: #fff;}
+        p.subtitle { color: #666; font-size: 16px; margin: 0 0 32px 0; }
         .input-group { margin-bottom: 24px; text-align: left; }
-        .input-group label { display: block; font-size: 14px; font-weight: 700; margin-bottom: 8px; color: var(--uber-black);}
-        .sub-label { display: block; font-size: 12px; font-weight: 400; color: var(--text-gray); margin-bottom: 8px;}
-        input[type="text"], select, input[type="file"] { width: 100%; padding: 14px 16px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 8px;}
+        .input-group label { display: block; font-size: 14px; font-weight: 700; margin-bottom: 8px; color: #000;}
+        .sub-label { display: block; font-size: 12px; font-weight: 400; color: #666; margin-bottom: 8px;}
+        input[type="text"], input[type="file"] { width: 100%; padding: 14px 16px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 8px;}
         textarea { width: 100%; padding: 14px 16px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 8px; font-family: 'Inter', sans-serif; resize: vertical; min-height: 80px;}
         
         .btn-primary { background: #000; color: #fff; border: none; padding: 16px 24px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 16px; transition: 0.2s;}
         .btn-secondary { background: #f1f1f1; color: #000; border: none; padding: 16px 24px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 16px; transition: 0.2s;}
         .btn-primary:active, .btn-secondary:active { transform: scale(0.98); }
         
-        .nav-link { display: inline-block; margin-top: 24px; color: var(--uber-black); text-decoration: none; font-weight: 500; font-size: 16px; background: var(--gray-chip); padding: 12px 24px; border-radius: 999px; transition: 0.2s; }
-        .nav-link:hover { background: var(--gray-hover); }
+        .nav-link { display: inline-block; margin-top: 24px; color: #000; text-decoration: none; font-weight: 600; font-size: 15px; background: #f1f1f1; padding: 12px 24px; border-radius: 999px; transition: 0.2s; }
+        .nav-link:hover { background: #e0e0e0; }
         #status { color: #28a745; font-weight: 500; display: none; margin-top: 16px; font-size: 14px; text-align: center;}
         .hotspot-box { background: #fafafa; padding: 16px; border-radius: 8px; border: 1px dashed #afafaf; margin-bottom: 16px;}
         
@@ -29,12 +29,6 @@
         .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
         .step-indicator { font-size: 12px; font-weight: bold; color: #888; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px;}
-        
-        /* Chỉnh style cho cụm nút công cụ */
-        .tools-section { margin-top: 32px; padding-top: 24px; border-top: 1px solid #eaeaea; display: flex; flex-direction: column; gap: 12px;}
-        .btn-ar-quick { background: #e8f0fe; color: #1a73e8; border: none; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px; transition: 0.2s;}
-        .btn-download { background: #fce8e6; color: #d93025; border: none; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px; transition: 0.2s;}
-        .btn-ar-quick:active, .btn-download:active { transform: scale(0.98); }
     </style>
 </head>
 <body>
@@ -98,31 +92,13 @@
             </div>
         </form>
         
-        <div class="tools-section">
-            <button class="btn-ar-quick" onclick="moXemAR()">👁️ Trải nghiệm AR ngay (Nhập Tên Nhóm)</button>
-            <button class="btn-download" onclick="taiDuLieu()">📥 Tải Data ZIP (Dành cho Giáo Viên)</button>
-            
-            <div style="text-align: center; margin-top: 8px;">
-                <a href="/trien-lam.html" class="nav-link">Tham quan Phòng Triển lãm →</a>
-            </div>
+        <div style="text-align: center; margin-top: 16px;">
+            <a href="/trien-lam.html" class="nav-link">Tham quan Phòng Triển lãm →</a>
         </div>
-
     </div>
 
     <script type="module">
         import { Compiler } from 'https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js';
-
-        // --- HÀM XỬ LÝ 2 NÚT MỚI ---
-        window.moXemAR = () => {
-            const ten = prompt("Nhập Tên Nhóm bạn muốn xem (VD: Nhom_1):");
-            if(ten) window.location.href = `/ar-view.html?id=${ten.trim()}`;
-        }
-
-        window.taiDuLieu = () => {
-            const pass = prompt("Nhập mật khẩu giáo viên để tải toàn bộ bài nộp:");
-            if(pass) window.location.href = `/api/tai-du-lieu?pass=${pass.trim()}`;
-        }
-        // -----------------------------
 
         window.goToTab2 = () => {
             const tenNhom = document.getElementById('tenNhom').value;

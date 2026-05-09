@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const cloudinary = require('cloudinary').v2;
 const helmet = require('helmet');
+const archiver = require('archiver'); 
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -30,7 +31,6 @@ const upload = multer({
         }
         if (file.fieldname === 'model') {
             const ext = path.extname(file.originalname).toLowerCase();
-            // CHỈ CHẤP NHẬN .glb
             if (ext !== '.glb') {
                 return cb(new Error('Chỉ chấp nhận mô hình 3D định dạng .glb (Khuyến khích để tối ưu dung lượng)'));
             }
@@ -72,11 +72,9 @@ app.post('/api/nop-bai', upload.fields([{ name: 'image' }, { name: 'video' }, { 
         let modelUrl = "";
         if (req.files['model'] && req.files['model'][0]) {
             const modelFile = req.files['model'][0];
-            const ext = '.glb'; // Ép cứng luôn đuôi .glb
+            const ext = '.glb'; 
             const newPath = modelFile.path + ext; 
-            
             fs.renameSync(modelFile.path, newPath); 
-            
             const modelUpload = await cloudinary.uploader.upload(newPath, { folder: "bao-tang-song", resource_type: "raw" });
             modelUrl = modelUpload.secure_url;
             fs.unlinkSync(newPath); 
@@ -113,6 +111,38 @@ app.get('/api/danh-sach', (req, res) => {
         }
     });
     res.json(students);
+});
+
+// NÂNG CẤP API TẢI DỮ LIỆU: CÓ THỂ TẢI THEO NHÓM
+app.get('/api/tai-du-lieu', (req, res) => {
+    const matKhauNhapVao = req.query.pass;
+    const tenNhom = req.query.nhom; // Lấy tên nhóm từ yêu cầu
+    const matKhauGiaoVien = process.env.ADMIN_PASS || 'GiaoVien123'; 
+
+    if (matKhauNhapVao !== matKhauGiaoVien) {
+        return res.status(401).send('<h1>❌ Sai mật khẩu! Bạn không có quyền tải file.</h1>');
+    }
+
+    let targetPath = path.join(__dirname, 'data');
+    let zipName = 'Toan_Bo_Du_Lieu_Bao_Tang.zip';
+
+    // Nếu giáo viên chỉ muốn tải của 1 nhóm
+    if (tenNhom) {
+        targetPath = path.join(__dirname, 'data', tenNhom);
+        zipName = `Bai_Tap_${tenNhom}.zip`;
+    }
+
+    if (!fs.existsSync(targetPath)) {
+        return res.status(404).send('<h1>Dữ liệu không tồn tại!</h1>');
+    }
+
+    res.attachment(zipName);
+    const archive = archiver('zip', { zlib: { level: 9 } });
+
+    archive.on('error', (err) => { res.status(500).send({error: err.message}); });
+    archive.pipe(res);
+    archive.directory(targetPath, false);
+    archive.finalize();
 });
 
 app.use((err, req, res, next) => {
