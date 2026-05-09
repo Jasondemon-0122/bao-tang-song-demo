@@ -6,8 +6,30 @@ const path = require('path');
 const cloudinary = require('cloudinary').v2;
 const helmet = require('helmet');
 const archiver = require('archiver'); 
-const https = require('https'); // Thêm bộ công cụ để tải file từ Đám mây
+const https = require('https');
+const mongoose = require('mongoose'); // THÊM THƯ VIỆN CƠ SỞ DỮ LIỆU
 
+// --- 1. KẾT NỐI DATABASE MONGODB VĨNH VIỄN ---
+mongoose.connect(process.env.MONGODB_URI)
+    .then(() => console.log("✨ Đã kết nối Cơ sở dữ liệu MongoDB vĩnh viễn!"))
+    .catch(err => console.error("❌ Lỗi kết nối DB:", err));
+
+// --- 2. TẠO CẤU TRÚC "SỔ CÁI" CHO BÀI NỘP ---
+const SubmissionSchema = new mongoose.Schema({
+    tenNhom: String,
+    image: String,
+    video: String,
+    model: String,
+    mindFile: String, // Lưu link file nhận diện AR trên Cloudinary
+    hs1Title: String,
+    hs1Content: String,
+    hs2Title: String,
+    hs2Content: String,
+    createdAt: { type: Date, default: Date.now }
+});
+const Submission = mongoose.model('Submission', SubmissionSchema);
+
+// --- 3. CẤU HÌNH CLOUDINARY ---
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
@@ -42,13 +64,13 @@ const upload = multer({
 
 app.use('/mindar', express.static(path.join(__dirname, 'node_modules/mind-ar/dist')));
 app.use(express.static('public'));
-app.use('/data', express.static('data'));
 
 const sanitizeText = (str) => {
     if (!str || typeof str !== 'string') return '';
     return str.trim().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
 };
 
+// --- API 1: NỘP BÀI (ĐẨY LÊN CLOUD VÀ LƯU MONGO) ---
 app.post('/api/nop-bai', upload.fields([{ name: 'image' }, { name: 'video' }, { name: 'model' }, { name: 'mind' }]), async (req, res, next) => {
     try {
         let rawTenNhom = sanitizeText(req.body.tenNhom);
@@ -56,12 +78,18 @@ app.post('/api/nop-bai', upload.fields([{ name: 'image' }, { name: 'video' }, { 
         if (!tenNhom) tenNhom = "Hoc_Sinh_An_Danh";
         if (tenNhom.length > 50) tenNhom = tenNhom.substring(0, 50);
 
-        const dirPath = path.join(__dirname, 'data', tenNhom);
-        if (!fs.existsSync(dirPath)) fs.mkdirSync(dirPath, { recursive: true });
-
+        // Upload Ảnh
         const imgUpload = await cloudinary.uploader.upload(req.files['image'][0].path, { folder: "bao-tang-song" });
-        fs.renameSync(req.files['mind'][0].path, path.join(dirPath, 'targets.mind'));
+        
+        // Upload file .mind (Nhận diện AR) lên mây thay vì lưu máy chủ
+        const mindUpload = await cloudinary.uploader.upload(req.files['mind'][0].path, { 
+            folder: "bao-tang-song/mind_files", 
+            resource_type: "raw",
+            public_id: `${tenNhom}_targets_${Date.now()}` // Thêm Date để chống trùng lặp
+        });
+
         fs.unlinkSync(req.files['image'][0].path);
+        fs.unlinkSync(req.files['mind'][0].path);
 
         let vidUrl = "";
         if (req.files['video'] && req.files['video'][0]) {
@@ -81,40 +109,53 @@ app.post('/api/nop-bai', upload.fields([{ name: 'image' }, { name: 'video' }, { 
             fs.unlinkSync(newPath); 
         }
 
-        const links = { 
-            image: imgUpload.secure_url, 
-            video: vidUrl, 
-            model: modelUrl, 
+        // Lưu thông tin vào Database MongoDB (Nếu nhóm đã nộp rồi thì cập nhật đè lên)
+        const submissionData = {
+            tenNhom: tenNhom,
+            image: imgUpload.secure_url,
+            video: vidUrl,
+            model: modelUrl,
+            mindFile: mindUpload.secure_url,
             hs1Title: sanitizeText(req.body.hs1Title) || "Góc Giải Nghĩa",
             hs1Content: sanitizeText(req.body.hs1Content) || "Chưa có thông tin",
             hs2Title: sanitizeText(req.body.hs2Title) || "Bí mật Lịch sử",
-            hs2Content: sanitizeText(req.body.hs2Content) || "Chưa có thông tin"
+            hs2Content: sanitizeText(req.body.hs2Content) || "Chưa có thông tin",
+            createdAt: Date.now()
         };
-        fs.writeFileSync(path.join(dirPath, 'links.json'), JSON.stringify(links));
 
-        res.json({ success: true, message: 'Dữ liệu đã được kiểm duyệt và lưu trữ an toàn!' });
+        await Submission.findOneAndUpdate({ tenNhom: tenNhom }, submissionData, { upsert: true, new: true });
+
+        res.json({ success: true, message: 'Dữ liệu đã được lưu vĩnh viễn trên Đám mây và Database!' });
 
     } catch (error) {
         next(error); 
     }
 });
 
-app.get('/api/danh-sach', (req, res) => {
-    const dataPath = path.join(__dirname, 'data');
-    if (!fs.existsSync(dataPath)) return res.json([]);
-    const students = [];
-    const dirs = fs.readdirSync(dataPath).filter(f => fs.statSync(path.join(dataPath, f)).isDirectory());
-    dirs.forEach(dir => {
-        const linkFile = path.join(dataPath, dir, 'links.json');
-        if(fs.existsSync(linkFile)) {
-            const links = JSON.parse(fs.readFileSync(linkFile));
-            students.push({ name: dir, image: links.image });
-        }
-    });
-    res.json(students);
+// --- API 2: LẤY DANH SÁCH (ĐỌC TỪ MONGO) ---
+app.get('/api/danh-sach', async (req, res) => {
+    try {
+        const submissions = await Submission.find().sort({ createdAt: -1 }); // Mới nhất xếp trước
+        const students = submissions.map(s => ({ name: s.tenNhom, image: s.image }));
+        res.json(students);
+    } catch (error) {
+        console.error("Lỗi lấy danh sách:", error);
+        res.json([]);
+    }
 });
 
-// NÂNG CẤP API TẢI DỮ LIỆU: TỰ ĐỘNG GOM ĐỦ ẢNH, VIDEO VÀ 3D TỪ CLOUDINARY
+// --- API MỚI: LẤY CHI TIẾT CHO MÁY CHIẾU AR ---
+app.get('/api/chi-tiet/:id', async (req, res) => {
+    try {
+        const data = await Submission.findOne({ tenNhom: req.params.id });
+        if (!data) return res.status(404).json({ error: "Không tìm thấy dữ liệu nhóm này!" });
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({ error: "Lỗi máy chủ!" });
+    }
+});
+
+// --- API 3: TẢI ZIP (GOM TỪ MÂY XUỐNG) ---
 app.get('/api/tai-du-lieu', async (req, res) => {
     const matKhauNhapVao = req.query.pass;
     const tenNhom = req.query.nhom; 
@@ -124,16 +165,17 @@ app.get('/api/tai-du-lieu', async (req, res) => {
         return res.status(401).send('<h1>❌ Sai mật khẩu! Bạn không có quyền tải file.</h1>');
     }
 
-    let targetPath = path.join(__dirname, 'data');
     let zipName = 'Toan_Bo_Du_Lieu_Bao_Tang.zip';
-
+    let query = {};
     if (tenNhom) {
-        targetPath = path.join(__dirname, 'data', tenNhom);
         zipName = `Bai_Tap_${tenNhom}.zip`;
+        query = { tenNhom: tenNhom };
     }
 
-    if (!fs.existsSync(targetPath)) {
-        return res.status(404).send('<h1>Dữ liệu không tồn tại!</h1>');
+    const items = await Submission.find(query);
+
+    if (items.length === 0) {
+        return res.status(404).send('<h1>Không tìm thấy dữ liệu!</h1>');
     }
 
     res.setHeader('Content-Type', 'application/zip');
@@ -153,12 +195,9 @@ app.get('/api/tai-du-lieu', async (req, res) => {
     
     archive.pipe(res);
 
-    // HÀM ĐẶC BIỆT: Tải file từ link Cloudinary và thả thẳng vào file ZIP
     const appendUrlToZip = (url, zipPath) => {
         return new Promise((resolve) => {
             if (!url || url.trim() === "") return resolve();
-            
-            // Mở đường truyền tải file
             https.get(url, (response) => {
                 if (response.statusCode === 200) {
                     archive.append(response, { name: zipPath });
@@ -166,42 +205,25 @@ app.get('/api/tai-du-lieu', async (req, res) => {
                 resolve();
             }).on('error', (err) => {
                 console.error("Lỗi tải file từ đám mây:", err);
-                resolve();
+                resolve(); 
             });
         });
     };
 
-    // NẾU CHỈ TẢI CỦA 1 NHÓM
-    if (tenNhom) {
-        archive.directory(targetPath, false); // Vẫn nén 2 file local (links.json, targets.mind)
+    for (const item of items) {
+        const folder = item.tenNhom;
+        // Tạo file JSON chứa chữ
+        const infoJson = JSON.stringify(item, null, 2);
+        archive.append(infoJson, { name: `${folder}/thong_tin_hotspot.json` });
         
-        const linkFile = path.join(targetPath, 'links.json');
-        if (fs.existsSync(linkFile)) {
-            const links = JSON.parse(fs.readFileSync(linkFile));
-            // Ra lệnh máy chủ gọi mây tải thêm 3 file này đắp vào ZIP
-            await appendUrlToZip(links.image, 'anh_poster_ar.jpg');
-            await appendUrlToZip(links.video, 'video_thuyet_minh.mp4');
-            await appendUrlToZip(links.model, 'mo_hinh_3d.glb');
-        }
-    } 
-    // NẾU TẢI CỦA TOÀN BỘ CÁC NHÓM
-    else {
-        const dirs = fs.readdirSync(targetPath).filter(f => fs.statSync(path.join(targetPath, f)).isDirectory());
-        for (const dir of dirs) {
-            const groupPath = path.join(targetPath, dir);
-            archive.directory(groupPath, dir); // Gom vào 1 folder chung tên nhóm
-            
-            const linkFile = path.join(groupPath, 'links.json');
-            if (fs.existsSync(linkFile)) {
-                const links = JSON.parse(fs.readFileSync(linkFile));
-                await appendUrlToZip(links.image, `${dir}/anh_poster_ar.jpg`);
-                await appendUrlToZip(links.video, `${dir}/video_thuyet_minh.mp4`);
-                await appendUrlToZip(links.model, `${dir}/mo_hinh_3d.glb`);
-            }
-        }
+        // Kéo file từ mây xuống Zip
+        await appendUrlToZip(item.mindFile, `${folder}/nhan_dien_ar.mind`);
+        await appendUrlToZip(item.image, `${folder}/anh_poster.jpg`);
+        if (item.video) await appendUrlToZip(item.video, `${folder}/video_thuyet_minh.mp4`);
+        if (item.model) await appendUrlToZip(item.model, `${folder}/mo_hinh_3d.glb`);
     }
 
-    archive.finalize(); // Đóng gói và giao hàng
+    archive.finalize();
 });
 
 app.use((err, req, res, next) => {

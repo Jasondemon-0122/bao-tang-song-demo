@@ -26,17 +26,8 @@
         #panel-left.show { left: 12px; margin-left: 0; opacity: 1; transform: translateY(-50%) scale(1); pointer-events: auto; }
         #panel-right.show { right: 12px; margin-right: 0; opacity: 1; transform: translateY(-50%) scale(1); pointer-events: auto; }
         
-        /* BẢN VÁ CSS TRỊ LỖI NUỐT CHỮ */
         .side-panel h3 { font-size: 16px; margin: 0 0 8px 0; font-weight: 700; line-height: 1.3; padding-right: 20px; color: #000000; word-break: break-word;}
-        .side-panel .content-box { 
-            font-size: 13px; 
-            color: #333333; 
-            line-height: 1.5; 
-            max-height: 40vh; 
-            overflow-y: auto; 
-            white-space: pre-wrap; /* Hiển thị chính xác phím Enter (xuống dòng) của học sinh */
-            word-break: break-word; /* Ép ngắt dòng khi chữ quá dài, chống tràn màn hình */
-        }
+        .side-panel .content-box { font-size: 13px; color: #333333; line-height: 1.5; max-height: 40vh; overflow-y: auto; white-space: pre-wrap; word-break: break-word; }
         
         .close-btn { position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 18px; color: #888; cursor: pointer; padding: 0; line-height: 1;}
         .close-btn:active { color: #000; }
@@ -120,7 +111,6 @@
           }
         });
 
-        // BẢN VÁ LOGIC ĐIỂM CHẠM: Bỏ qua A-Frame, truy xuất trực tiếp từ Dataset
         AFRAME.registerComponent('hotspot-action', {
             schema: { side: {type: 'string', default: 'left'} },
             init: function () {
@@ -128,14 +118,12 @@
                     if(e) e.preventDefault(); 
                     const side = this.data.side; 
                     
-                    // Cơ chế xử lý an toàn các ký tự đặc biệt (như ngoặc kép, dấu nháy)
                     const decodeHTML = (html) => {
                         const txt = document.createElement("textarea");
                         txt.innerHTML = html;
                         return txt.value;
                     };
 
-                    // Lấy dữ liệu an toàn 100% không lo bị cắt xén
                     const rawTitle = decodeURIComponent(this.el.getAttribute('data-title') || "Chưa có tiêu đề");
                     const rawContent = decodeURIComponent(this.el.getAttribute('data-content') || "Chưa có nội dung");
 
@@ -158,8 +146,11 @@
             startBtn.disabled = true;
 
             try {
-                const res = await fetch(`/data/${id}/links.json?t=` + new Date().getTime());
+                // ĐÃ SỬA: Lấy dữ liệu an toàn từ Database thay vì folder cục bộ
+                const res = await fetch(`/api/chi-tiet/${id}?t=` + new Date().getTime());
                 const studentData = await res.json();
+
+                if(studentData.error) throw new Error(studentData.error);
 
                 document.getElementById('start-screen').style.display = 'none';
                 
@@ -183,8 +174,9 @@
                     renderHTML += `<a-entity id="ar-model" gltf-model="#userModel" position="0 ${positionY} 0.1" scale="0.005 0.005 0.005" class="clickable" drag-rotate-model></a-entity>`;
                 }
 
+                // ĐÃ SỬA: Gắn link file .mind trực tiếp từ Cloudinary
                 document.getElementById('scene-container').innerHTML = `
-                    <a-scene mindar-image="imageTargetSrc: /data/${id}/targets.mind; autoStart: true; uiLoading: no; uiScanning: no; uiError: no;" 
+                    <a-scene mindar-image="imageTargetSrc: ${studentData.mindFile}; autoStart: true; uiLoading: no; uiScanning: no; uiError: no;" 
                              color-space="sRGB" renderer="colorManagement: true" 
                              vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false"
                              cursor="rayOrigin: mouse; fuse: false" raycaster="objects: .clickable; far: 10000;">
