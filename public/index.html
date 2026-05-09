@@ -8,7 +8,7 @@
     
     <style>
         body { background-color: var(--uber-white); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 40px 20px;}
-        .container { padding: 40px 32px; border-radius: 12px; box-shadow: var(--shadow-light); width: 100%; max-width: 460px; position: relative; overflow: hidden;}
+        .container { padding: 40px 32px; border-radius: 12px; box-shadow: var(--shadow-light); width: 100%; max-width: 460px; position: relative; overflow: hidden; background: #fff;}
         p.subtitle { color: var(--text-gray); font-size: 16px; margin: 0 0 32px 0; }
         .input-group { margin-bottom: 24px; text-align: left; }
         .input-group label { display: block; font-size: 14px; font-weight: 700; margin-bottom: 8px; color: var(--uber-black);}
@@ -29,6 +29,12 @@
         .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
         .step-indicator { font-size: 12px; font-weight: bold; color: #888; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px;}
+        
+        /* Chỉnh style cho cụm nút công cụ */
+        .tools-section { margin-top: 32px; padding-top: 24px; border-top: 1px solid #eaeaea; display: flex; flex-direction: column; gap: 12px;}
+        .btn-ar-quick { background: #e8f0fe; color: #1a73e8; border: none; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px; transition: 0.2s;}
+        .btn-download { background: #fce8e6; color: #d93025; border: none; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px; transition: 0.2s;}
+        .btn-ar-quick:active, .btn-download:active { transform: scale(0.98); }
     </style>
 </head>
 <body>
@@ -41,7 +47,7 @@
 
                 <div class="input-group">
                     <label>Tên nhóm của bạn (*)</label>
-                    <input type="text" id="tenNhom" name="tenNhom" placeholder="VD: Nhóm 1" required>
+                    <input type="text" id="tenNhom" name="tenNhom" placeholder="VD: Nhom_1" required>
                 </div>
                 
                 <div class="input-group">
@@ -92,13 +98,31 @@
             </div>
         </form>
         
-        <div style="text-align: center;">
-            <a href="/trien-lam.html" class="nav-link">Tham quan bảo tàng →</a>
+        <div class="tools-section">
+            <button class="btn-ar-quick" onclick="moXemAR()">👁️ Trải nghiệm AR ngay (Nhập Tên Nhóm)</button>
+            <button class="btn-download" onclick="taiDuLieu()">📥 Tải Data ZIP (Dành cho Giáo Viên)</button>
+            
+            <div style="text-align: center; margin-top: 8px;">
+                <a href="/trien-lam.html" class="nav-link">Tham quan Phòng Triển lãm →</a>
+            </div>
         </div>
+
     </div>
 
     <script type="module">
         import { Compiler } from 'https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js';
+
+        // --- HÀM XỬ LÝ 2 NÚT MỚI ---
+        window.moXemAR = () => {
+            const ten = prompt("Nhập Tên Nhóm bạn muốn xem (VD: Nhom_1):");
+            if(ten) window.location.href = `/ar-view.html?id=${ten.trim()}`;
+        }
+
+        window.taiDuLieu = () => {
+            const pass = prompt("Nhập mật khẩu giáo viên để tải toàn bộ bài nộp:");
+            if(pass) window.location.href = `/api/tai-du-lieu?pass=${pass.trim()}`;
+        }
+        // -----------------------------
 
         window.goToTab2 = () => {
             const tenNhom = document.getElementById('tenNhom').value;
