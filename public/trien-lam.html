@@ -17,95 +17,95 @@
         }
         /* Header */
         .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #eaeaea;
-            padding-bottom: 20px;
-            margin-bottom: 40px;
-            flex-wrap: wrap;
-            gap: 16px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 2px solid #eaeaea; padding-bottom: 20px; margin-bottom: 40px;
+            flex-wrap: wrap; gap: 16px;
         }
-        .header h1 {
-            margin: 0;
-            font-size: 32px;
-            font-weight: 700;
-            color: #000;
-        }
-        .header-actions {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
+        .header h1 { margin: 0; font-size: 32px; font-weight: 700; color: #000; }
+        .header-actions { display: flex; gap: 12px; align-items: center; }
+        
         .btn-back {
-            background: #e9ecef; color: #000;
-            text-decoration: none; font-weight: 600; font-size: 14px;
-            padding: 10px 20px; border-radius: 999px; transition: 0.2s;
+            background: #e9ecef; color: #000; text-decoration: none; font-weight: 600; 
+            font-size: 14px; padding: 10px 20px; border-radius: 999px; transition: 0.2s;
         }
         .btn-back:hover { background: #dee2e6; }
         
         .btn-ar-quick {
-            background: #e8f0fe; color: #1a73e8; border: none;
-            padding: 10px 20px; border-radius: 999px; font-weight: 600;
-            font-size: 14px; cursor: pointer; transition: 0.2s;
-            font-family: 'Inter', sans-serif;
+            background: #e8f0fe; color: #1a73e8; border: none; padding: 10px 20px; 
+            border-radius: 999px; font-weight: 600; font-size: 14px; cursor: pointer; 
+            transition: 0.2s; font-family: 'Inter', sans-serif;
         }
         .btn-ar-quick:hover { background: #d2e3fc; }
 
         /* Grid Triển lãm */
         .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 24px;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 24px;
         }
         
         /* Card Tác phẩm */
         .card {
-            background: #fff;
-            padding: 16px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+            background: #fff; padding: 16px; border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06); display: flex; flex-direction: column; gap: 12px;
         }
-        .card img {
-            width: 100%;
-            height: 180px;
-            object-fit: cover;
-            border-radius: 8px;
-        }
-        .card h3 {
-            margin: 0;
-            font-size: 18px;
-            color: #000;
-            font-weight: 700;
-            word-break: break-all;
-        }
+        .card img { width: 100%; height: 180px; object-fit: cover; border-radius: 8px; }
+        .card h3 { margin: 0; font-size: 18px; color: #000; font-weight: 700; word-break: break-all; }
         
-        /* Box chứa các nút */
-        .action-box {
-            display: flex;
-            gap: 8px;
-            margin-top: 4px;
-        }
+        .action-box { display: flex; gap: 8px; margin-top: 4px; }
         .btn-ar {
-            flex-grow: 1;
-            background: #000; color: #fff; text-decoration: none;
+            flex-grow: 1; background: #000; color: #fff; text-decoration: none;
             text-align: center; padding: 12px; border-radius: 8px;
             font-weight: 600; font-size: 14px; transition: 0.2s;
         }
         .btn-ar:hover { background: #333; }
 
         .btn-download {
-            background: #f1f1f1; border: none; color: #000;
-            border-radius: 8px; padding: 0 16px; font-size: 18px;
-            cursor: pointer; transition: 0.2s; display: flex;
-            align-items: center; justify-content: center;
+            background: #f1f1f1; border: none; color: #000; border-radius: 8px; 
+            padding: 0 16px; font-size: 18px; cursor: pointer; transition: 0.2s; 
+            display: flex; align-items: center; justify-content: center;
         }
         .btn-download:hover { background: #e0e0e0; }
 
         .empty-state { text-align: center; color: #666; margin-top: 50px; font-size: 16px; width: 100%; grid-column: 1 / -1;}
+
+        /* --- UI MODAL (HỘP THOẠI CHUYÊN NGHIỆP) --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px);
+            display: none; justify-content: center; align-items: center; z-index: 1000;
+            opacity: 0; transition: opacity 0.3s ease;
+        }
+        .modal-overlay.active { opacity: 1; display: flex; }
+        
+        .modal-content {
+            background: #fff; padding: 32px; border-radius: 16px; width: 90%; max-width: 400px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15); transform: translateY(20px); transition: transform 0.3s ease;
+        }
+        .modal-overlay.active .modal-content { transform: translateY(0); }
+        
+        .modal-title { margin: 0 0 12px 0; font-size: 22px; font-weight: 700; color: #000; }
+        .modal-desc { margin: 0 0 24px 0; font-size: 14px; color: #555; line-height: 1.5; }
+        
+        .modal-input {
+            width: 100%; padding: 14px 16px; border: 2px solid #eaeaea; border-radius: 8px;
+            font-size: 16px; margin-bottom: 24px; box-sizing: border-box; font-family: 'Inter', sans-serif;
+            transition: 0.2s;
+        }
+        .modal-input:focus { border-color: #000; outline: none; }
+        
+        .modal-actions { display: flex; gap: 12px; justify-content: flex-end; }
+        .btn-modal-cancel { 
+            background: #f1f1f1; color: #000; border: none; padding: 12px 20px; 
+            border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 15px;
+        }
+        .btn-modal-cancel:hover { background: #e0e0e0; }
+        
+        .btn-modal-confirm { 
+            background: #000; color: #fff; border: none; padding: 12px 20px; 
+            border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 15px;
+        }
+        .btn-modal-confirm:hover { background: #333; }
+        .btn-modal-confirm.red { background: #d93025; }
+        .btn-modal-confirm.red:hover { background: #b3261e; }
     </style>
 </head>
 <body>
@@ -113,7 +113,7 @@
         <div class="header">
             <h1>Phòng Triển Lãm</h1>
             <div class="header-actions">
-                <button class="btn-ar-quick" onclick="moXemARNhanh()">👁️ Trải nghiệm AR (Nhập Tên)</button>
+                <button class="btn-ar-quick" onclick="openARModal()">👁️ Trải nghiệm AR (Nhập Tên)</button>
                 <a href="/" class="btn-back">← Quay lại trạm</a>
             </div>
         </div>
@@ -123,20 +123,93 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="downloadModal">
+        <div class="modal-content">
+            <h2 class="modal-title">Yêu cầu bảo mật</h2>
+            <p class="modal-desc">Vui lòng nhập mật khẩu Giáo viên để tải về gói dữ liệu gốc của nhóm <strong id="groupNameDisplay"></strong>.</p>
+            <input type="password" id="passInput" class="modal-input" placeholder="Nhập mật khẩu...">
+            <div class="modal-actions">
+                <button class="btn-modal-cancel" onclick="closeModal('downloadModal')">Hủy bỏ</button>
+                <button class="btn-modal-confirm red" onclick="confirmDownload()">Tải dữ liệu 📥</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="arModal">
+        <div class="modal-content">
+            <h2 class="modal-title">Khởi động AR</h2>
+            <p class="modal-desc">Nhập chính xác <strong>Tên Nhóm</strong> mà bạn muốn trải nghiệm không gian thực tế ảo.</p>
+            <input type="text" id="arNameInput" class="modal-input" placeholder="VD: Nhom_1">
+            <div class="modal-actions">
+                <button class="btn-modal-cancel" onclick="closeModal('arModal')">Hủy bỏ</button>
+                <button class="btn-modal-confirm" onclick="confirmAR()">Vào phòng 👁️</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Nút mở AR nhập tay
-        window.moXemARNhanh = () => {
-            const ten = prompt("Nhập Tên Nhóm bạn muốn xem (VD: Nhom_1):");
-            if(ten) window.location.href = `/ar-view.html?id=${ten.trim()}`;
+        let currentDownloadGroup = "";
+
+        // --- CÁC HÀM XỬ LÝ GIAO DIỆN MODAL ---
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
         }
 
-        // Nút tải dữ liệu (Yêu cầu mật khẩu)
+        window.closeModal = (modalId) => {
+            const modal = document.getElementById(modalId);
+            modal.classList.remove('active');
+            setTimeout(() => modal.style.display = 'none', 300);
+        }
+
+        // --- CHỨC NĂNG TẢI BÀI TẬP ---
         window.taiBaiTap = (tenNhom) => {
-            const pass = prompt(`Nhập mật khẩu giáo viên để tải bài của nhóm [${tenNhom}]:`);
-            if(pass) window.location.href = `/api/tai-du-lieu?pass=${pass.trim()}&nhom=${tenNhom}`;
+            currentDownloadGroup = tenNhom;
+            document.getElementById('groupNameDisplay').innerText = `[${tenNhom}]`;
+            document.getElementById('passInput').value = ""; 
+            openModal('downloadModal');
+            document.getElementById('passInput').focus();
         }
 
-        // Lấy danh sách từ máy chủ
+        window.confirmDownload = () => {
+            const pass = document.getElementById('passInput').value;
+            if(pass.trim() === "") {
+                alert("Vui lòng nhập mật khẩu!");
+                return;
+            }
+            window.location.href = `/api/tai-du-lieu?pass=${pass.trim()}&nhom=${currentDownloadGroup}`;
+            closeModal('downloadModal');
+        }
+
+        // Bắt sự kiện phím Enter cho ô Mật khẩu
+        document.getElementById('passInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') confirmDownload();
+        });
+
+        // --- CHỨC NĂNG XEM AR NHANH ---
+        window.openARModal = () => {
+            document.getElementById('arNameInput').value = "";
+            openModal('arModal');
+            document.getElementById('arNameInput').focus();
+        }
+
+        window.confirmAR = () => {
+            const ten = document.getElementById('arNameInput').value;
+            if(ten.trim() === "") {
+                alert("Vui lòng nhập tên nhóm!");
+                return;
+            }
+            window.location.href = `/ar-view.html?id=${ten.trim()}`;
+        }
+
+        // Bắt sự kiện phím Enter cho ô Tên nhóm
+        document.getElementById('arNameInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') confirmAR();
+        });
+
+
+        // --- LẤY DANH SÁCH TỪ MÁY CHỦ ---
         async function loadData() {
             try {
                 const res = await fetch('/api/danh-sach');
