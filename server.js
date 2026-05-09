@@ -6,6 +6,7 @@ const path = require('path');
 const cloudinary = require('cloudinary').v2;
 const helmet = require('helmet');
 const archiver = require('archiver'); 
+const https = require('https'); // Thêm bộ công cụ để tải file từ Đám mây
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -113,8 +114,8 @@ app.get('/api/danh-sach', (req, res) => {
     res.json(students);
 });
 
-// NÂNG CẤP BỌC LÓT LỖI ARCHIVER & LỖI TRÀN RAM
-app.get('/api/tai-du-lieu', (req, res) => {
+// NÂNG CẤP API TẢI DỮ LIỆU: TỰ ĐỘNG GOM ĐỦ ẢNH, VIDEO VÀ 3D TỪ CLOUDINARY
+app.get('/api/tai-du-lieu', async (req, res) => {
     const matKhauNhapVao = req.query.pass;
     const tenNhom = req.query.nhom; 
     const matKhauGiaoVien = process.env.ADMIN_PASS || 'GiaoVien123'; 
@@ -138,7 +139,6 @@ app.get('/api/tai-du-lieu', (req, res) => {
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', `attachment; filename=${zipName}`);
 
-    // BẢN VÁ: Dùng cú pháp gọi an toàn để triệt tiêu lỗi "not a function"
     let archive;
     if (typeof archiver === 'function') {
         archive = archiver('zip', { zlib: { level: 0 } });
@@ -148,14 +148,60 @@ app.get('/api/tai-du-lieu', (req, res) => {
 
     archive.on('error', (err) => { 
         console.error("Lỗi nén file:", err);
-        if (!res.headersSent) {
-            res.status(500).send('<h1>Lỗi hệ thống khi tạo file ZIP.</h1>');
-        }
+        if (!res.headersSent) res.status(500).send('<h1>Lỗi hệ thống khi tạo file ZIP.</h1>');
     });
     
     archive.pipe(res);
-    archive.directory(targetPath, false);
-    archive.finalize();
+
+    // HÀM ĐẶC BIỆT: Tải file từ link Cloudinary và thả thẳng vào file ZIP
+    const appendUrlToZip = (url, zipPath) => {
+        return new Promise((resolve) => {
+            if (!url || url.trim() === "") return resolve();
+            
+            // Mở đường truyền tải file
+            https.get(url, (response) => {
+                if (response.statusCode === 200) {
+                    archive.append(response, { name: zipPath });
+                }
+                resolve();
+            }).on('error', (err) => {
+                console.error("Lỗi tải file từ đám mây:", err);
+                resolve();
+            });
+        });
+    };
+
+    // NẾU CHỈ TẢI CỦA 1 NHÓM
+    if (tenNhom) {
+        archive.directory(targetPath, false); // Vẫn nén 2 file local (links.json, targets.mind)
+        
+        const linkFile = path.join(targetPath, 'links.json');
+        if (fs.existsSync(linkFile)) {
+            const links = JSON.parse(fs.readFileSync(linkFile));
+            // Ra lệnh máy chủ gọi mây tải thêm 3 file này đắp vào ZIP
+            await appendUrlToZip(links.image, 'anh_poster_ar.jpg');
+            await appendUrlToZip(links.video, 'video_thuyet_minh.mp4');
+            await appendUrlToZip(links.model, 'mo_hinh_3d.glb');
+        }
+    } 
+    // NẾU TẢI CỦA TOÀN BỘ CÁC NHÓM
+    else {
+        const dirs = fs.readdirSync(targetPath).filter(f => fs.statSync(path.join(targetPath, f)).isDirectory());
+        for (const dir of dirs) {
+            const groupPath = path.join(targetPath, dir);
+            archive.directory(groupPath, dir); // Gom vào 1 folder chung tên nhóm
+            
+            const linkFile = path.join(groupPath, 'links.json');
+            if (fs.existsSync(linkFile)) {
+                const links = JSON.parse(fs.readFileSync(linkFile));
+                await appendUrlToZip(links.image, `${dir}/anh_poster_ar.jpg`);
+                await appendUrlToZip(links.video, `${dir}/video_thuyet_minh.mp4`);
+                await appendUrlToZip(links.model, `${dir}/mo_hinh_3d.glb`);
+            }
+        }
+    }
+
+    archive.finalize(); // Đóng gói và giao hàng
 });
 
 app.use((err, req, res, next) => {
