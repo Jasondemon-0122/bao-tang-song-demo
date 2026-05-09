@@ -113,7 +113,7 @@ app.get('/api/danh-sach', (req, res) => {
     res.json(students);
 });
 
-// NÂNG CẤP API TẢI DỮ LIỆU: BẢN VÁ LỖI TRÀN RAM
+// NÂNG CẤP BỌC LÓT LỖI ARCHIVER & LỖI TRÀN RAM
 app.get('/api/tai-du-lieu', (req, res) => {
     const matKhauNhapVao = req.query.pass;
     const tenNhom = req.query.nhom; 
@@ -135,16 +135,19 @@ app.get('/api/tai-du-lieu', (req, res) => {
         return res.status(404).send('<h1>Dữ liệu không tồn tại!</h1>');
     }
 
-    // Khai báo Header chuẩn chỉnh báo cho trình duyệt biết đây là file đính kèm
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', `attachment; filename=${zipName}`);
 
-    // ĐÃ SỬA: Đưa mức nén về 0 (Chỉ gói file, không vắt kiệt sức máy chủ)
-    const archive = archiver('zip', { zlib: { level: 0 } }); 
+    // BẢN VÁ: Dùng cú pháp gọi an toàn để triệt tiêu lỗi "not a function"
+    let archive;
+    if (typeof archiver === 'function') {
+        archive = archiver('zip', { zlib: { level: 0 } });
+    } else {
+        archive = archiver.create('zip', { zlib: { level: 0 } });
+    }
 
     archive.on('error', (err) => { 
         console.error("Lỗi nén file:", err);
-        // Tránh tình trạng server sập vì cố gửi thông báo lỗi khi đường truyền đã mở
         if (!res.headersSent) {
             res.status(500).send('<h1>Lỗi hệ thống khi tạo file ZIP.</h1>');
         }
