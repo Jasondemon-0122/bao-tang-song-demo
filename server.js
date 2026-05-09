@@ -113,10 +113,10 @@ app.get('/api/danh-sach', (req, res) => {
     res.json(students);
 });
 
-// NÂNG CẤP API TẢI DỮ LIỆU: CÓ THỂ TẢI THEO NHÓM
+// NÂNG CẤP API TẢI DỮ LIỆU: BẢN VÁ LỖI TRÀN RAM
 app.get('/api/tai-du-lieu', (req, res) => {
     const matKhauNhapVao = req.query.pass;
-    const tenNhom = req.query.nhom; // Lấy tên nhóm từ yêu cầu
+    const tenNhom = req.query.nhom; 
     const matKhauGiaoVien = process.env.ADMIN_PASS || 'GiaoVien123'; 
 
     if (matKhauNhapVao !== matKhauGiaoVien) {
@@ -126,7 +126,6 @@ app.get('/api/tai-du-lieu', (req, res) => {
     let targetPath = path.join(__dirname, 'data');
     let zipName = 'Toan_Bo_Du_Lieu_Bao_Tang.zip';
 
-    // Nếu giáo viên chỉ muốn tải của 1 nhóm
     if (tenNhom) {
         targetPath = path.join(__dirname, 'data', tenNhom);
         zipName = `Bai_Tap_${tenNhom}.zip`;
@@ -136,10 +135,21 @@ app.get('/api/tai-du-lieu', (req, res) => {
         return res.status(404).send('<h1>Dữ liệu không tồn tại!</h1>');
     }
 
-    res.attachment(zipName);
-    const archive = archiver('zip', { zlib: { level: 9 } });
+    // Khai báo Header chuẩn chỉnh báo cho trình duyệt biết đây là file đính kèm
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename=${zipName}`);
 
-    archive.on('error', (err) => { res.status(500).send({error: err.message}); });
+    // ĐÃ SỬA: Đưa mức nén về 0 (Chỉ gói file, không vắt kiệt sức máy chủ)
+    const archive = archiver('zip', { zlib: { level: 0 } }); 
+
+    archive.on('error', (err) => { 
+        console.error("Lỗi nén file:", err);
+        // Tránh tình trạng server sập vì cố gửi thông báo lỗi khi đường truyền đã mở
+        if (!res.headersSent) {
+            res.status(500).send('<h1>Lỗi hệ thống khi tạo file ZIP.</h1>');
+        }
+    });
+    
     archive.pipe(res);
     archive.directory(targetPath, false);
     archive.finalize();
